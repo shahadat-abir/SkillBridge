@@ -1,0 +1,258 @@
+@model JobDetailsViewModel
+@{
+    var j = Model.Job;
+    ViewData["Title"] = j.Title;
+    var signedIn = User.Identity?.IsAuthenticated == true;
+}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a asp-action="Index">Jobs</a></li>
+    <li class="breadcrumb-item active" aria-current="page">@j.Title</li>
+</ol></nav>
+
+@if (j.IsDemoData)
+{
+    <div class="alert alert-secondary py-2 small"><i class="bi bi-info-circle"></i> This is clearly-labelled <strong>demo data</strong> created for demonstration.</div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card mb-3"><div class="card-body">
+            <div class="d-flex flex-wrap gap-2 mb-2">
+                <span class="badge sb-difficulty" title="Job difficulty (complexity of the work)">@j.Difficulty.StarsText() @j.Difficulty.DisplayName()</span>
+                <span class="badge @(j.Mode == JobMode.Challenge ? "text-bg-warning" : "text-bg-light border")">@(j.Mode == JobMode.Challenge ? "Challenge" : "Standard job")</span>
+                <span class="badge @UiHelpers.Badge(j.Status)">@j.Status.DisplayName()</span>
+                @if (!Model.IsAccepting && j.Status == JobStatus.Open) { <span class="badge text-bg-secondary">Application deadline passed</span> }
+            </div>
+            <h1 class="h3">@j.Title</h1>
+            <div class="text-muted small mb-3">
+                @j.Category.Name · posted by
+                @if (signedIn) { <a asp-controller="Profile" asp-action="Details" asp-route-id="@j.EmployerId">@(j.Employer.CompanyName ?? j.Employer.FullName)</a> }
+                else { <text>@(j.Employer.CompanyName ?? j.Employer.FullName)</text> }
+                · @j.CreatedAt.Local("dd MMM yyyy") @if (j.UpdatedAt > j.CreatedAt.AddMinutes(1)) { <span>(updated @j.UpdatedAt.Local("dd MMM yyyy"))</span> }
+            </div>
+            <h2 class="h6">Description</h2>
+            <p class="pre-wrap">@j.Description</p>
+            @if (!string.IsNullOrWhiteSpace(j.EligibilityCriteria))
+            {
+                <h2 class="h6">Eligibility criteria / qualifications</h2>
+                <p class="pre-wrap">@j.EligibilityCriteria</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(j.SubmissionInstructions))
+            {
+                <h2 class="h6">Submission instructions</h2>
+                <p class="pre-wrap">@j.SubmissionInstructions</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(j.Terms))
+            {
+                <h2 class="h6">Additional terms and conditions</h2>
+                <p class="pre-wrap">@j.Terms</p>
+            }
+            @if (j.AttachmentPath != null)
+            {
+                <h2 class="h6">Reference material</h2>
+                if (signedIn)
+                {
+                    <a asp-action="Attachment" asp-route-id="@j.Id" class="btn btn-sm btn-outline-secondary"><i class="bi bi-paperclip"></i> @j.AttachmentOriginalName</a>
+                }
+                else
+                {
+                    <p class="small text-muted">Sign in to download the attachment.</p>
+                }
+            }
+        </div></div>
+
+        <div class="card mb-3">
+            <div class="card-header">Required skills <span class="small text-muted fw-normal">(minimum skill level)</span></div>
+            <div class="card-body p-0">
+                <table class="table mb-0 align-middle">
+                    <thead><tr><th>Skill</th><th>Minimum level</th>@if (Model.MyMatch != null) { <th>Your level (self-reported)</th> }</tr></thead>
+                    <tbody>
+                    @foreach (var s in j.RequiredSkills.OrderBy(s => s.Skill.Name))
+                    {
+                        var line = Model.MyMatch?.Lines.FirstOrDefault(l => l.SkillId == s.SkillId);
+                        <tr>
+                            <td>@s.Skill.Name</td>
+                            <td><span class="badge sb-skill-level">@s.MinimumLevel</span></td>
+                            @if (Model.MyMatch != null)
+                            {
+                                <td>
+                                    @if (line?.MeetsLevel == true) { <span class="sb-match-meets"><i class="bi bi-check-circle-fill"></i> @line.HunterLevel</span> }
+                                    else if (line?.HasSkill == true) { <span class="sb-match-below"><i class="bi bi-exclamation-circle"></i> @line.HunterLevel (below)</span> }
+                                    else { <span class="sb-match-missing"><i class="bi bi-x-circle"></i> Not on your profile</span> }
+                                </td>
+                            }
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            @if (Model.MyMatch != null)
+            {
+                <div class="card-footer small">Skill match: <strong>@Model.MyMatch.Met of @Model.MyMatch.Required</strong> required skills at the required level (@Model.MyMatch.Percent%). <a asp-controller="Profile" asp-action="Skills">Update my skills</a></div>
+            }
+        </div>
+
+        @if (j.Mode == JobMode.Challenge)
+        {
+            <div class="card border-warning mb-3">
+                <div class="card-header bg-warning-subtle"><i class="bi bi-trophy"></i> Challenge rules — please read before joining</div>
+                <div class="card-body small">
+                    <ul class="mb-0">
+                        <li><strong>Multiple people perform the same task.</strong> Up to <strong>@j.MaxParticipants</strong> Hunters may join (@Model.ActiveParticipants registered so far).</li>
+                        <li><strong>Only one participant receives the reward</strong> of @UiHelpers.Money(j.Budget, j.Currency).</li>
+                        <li><strong>How the winner is determined:</strong> submissions are time-stamped by the server when received. The Employer reviews them strictly in that order; the <strong>first submission that passes review wins</strong>.</li>
+                        <li><strong>Submissions arriving close together:</strong> the earlier server timestamp is always reviewed first, even by milliseconds. Only one winner can ever be recorded.</li>
+                        <li><strong>If a submission fails review</strong>, the next earliest submission is reviewed. The participant whose work failed may resubmit before the deadline (the resubmission gets a new timestamp).</li>
+                        <li><strong>Deadlines:</strong> registration closes @j.ApplicationDeadline.Local(); submissions close @j.ProjectDeadline.Local(). When a winner is chosen, all other participants are closed and unpaid.</li>
+                        <li>The reward is tracked in SkillBridge's <strong>simulated</strong> payment ledger; no money is transferred by the platform.</li>
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3"><div class="card-body">
+            <div class="fs-3 fw-bold text-sb">@UiHelpers.Money(j.Budget, j.Currency)</div>
+            <div class="small text-muted mb-3">@j.PaymentType.DisplayName() @(j.Mode == JobMode.Challenge ? "· reward for the winner" : "")</div>
+            <dl class="row small mb-0">
+                <dt class="col-6">Expected time</dt><dd class="col-6">@j.ExpectedCompletionDays day(s)</dd>
+                <dt class="col-6">Apply by</dt><dd class="col-6">@j.ApplicationDeadline.Local()</dd>
+                <dt class="col-6">Work deadline</dt><dd class="col-6">@j.ProjectDeadline.Local()</dd>
+                <dt class="col-6">@(j.Mode == JobMode.Challenge ? "Participants" : "Applicants")</dt>
+                <dd class="col-6">@(j.Mode == JobMode.Challenge ? $"{Model.ActiveParticipants}/{j.MaxParticipants}" : Model.ApplicationsCount.ToString())</dd>
+            </dl>
+        </div></div>
+
+        <div class="card mb-3"><div class="card-body">
+            @if (Model.IsOwner)
+            {
+                <h2 class="h6">Manage this job</h2>
+                <div class="d-grid gap-2">
+                    @if (j.Mode == JobMode.Standard)
+                    {
+                        <a asp-controller="Applications" asp-action="Compare" asp-route-id="@j.Id" class="btn btn-primary"><i class="bi bi-layout-three-columns"></i> Compare applicants</a>
+                        <a asp-controller="Applications" asp-action="ForJob" asp-route-id="@j.Id" class="btn btn-outline-primary">Manage applications</a>
+                    }
+                    else
+                    {
+                        <a asp-controller="Assignments" asp-action="Challenge" asp-route-id="@j.Id" class="btn btn-primary"><i class="bi bi-trophy"></i> Challenge review board</a>
+                    }
+                    @if (Model.CurrentAssignment != null)
+                    {
+                        <a asp-controller="Assignments" asp-action="Details" asp-route-id="@Model.CurrentAssignment.Id" class="btn btn-outline-success">Assignment: @Model.CurrentAssignment.Hunter.FullName</a>
+                    }
+                    @if (JobRules.CanEdit(j))
+                    {
+                        <a asp-action="Edit" asp-route-id="@j.Id" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i> Edit</a>
+                    }
+                    @if (JobRules.CanClose(j))
+                    {
+                        <form asp-action="Close" asp-route-id="@j.Id" method="post" data-confirm="Stop accepting new applications for this job?">
+                            <button class="btn btn-outline-secondary w-100">Close to new applications</button>
+                        </form>
+                    }
+                    @if (j.Status == JobStatus.Closed)
+                    {
+                        <form asp-action="Reopen" asp-route-id="@j.Id" method="post"><button class="btn btn-outline-success w-100">Reopen</button></form>
+                    }
+                    @if (j.Status is JobStatus.Open or JobStatus.Closed or JobStatus.Assigned)
+                    {
+                        <form asp-action="Cancel" asp-route-id="@j.Id" method="post" data-confirm="Cancel this job? Applicants will be notified. This cannot be undone.">
+                            <button class="btn btn-outline-danger w-100">Cancel job</button>
+                        </form>
+                    }
+                </div>
+            }
+            else if (Model.IsHunter)
+            {
+                if (j.Mode == JobMode.Standard)
+                {
+                    if (Model.MyApplication != null)
+                    {
+                        <p class="mb-2">Your application: <span class="badge @UiHelpers.Badge(Model.MyApplication.Status)">@Model.MyApplication.Status.DisplayName()</span></p>
+                        if (Model.MyAssignment != null)
+                        {
+                            <a asp-controller="Assignments" asp-action="Details" asp-route-id="@Model.MyAssignment.Id" class="btn btn-success w-100">Open my assignment</a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Applications" asp-action="Mine" class="btn btn-outline-primary w-100">My applications</a>
+                        }
+                    }
+                    else if (Model.IsAccepting)
+                    {
+                        <a asp-controller="Applications" asp-action="Apply" asp-route-id="@j.Id" class="btn btn-primary w-100"><i class="bi bi-send"></i> Apply / submit a bid</a>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">This job is not accepting applications.</p>
+                    }
+                }
+                else
+                {
+                    if (Model.MyAssignment != null)
+                    {
+                        <a asp-controller="Assignments" asp-action="Details" asp-route-id="@Model.MyAssignment.Id" class="btn btn-success w-100">Open my challenge entry</a>
+                    }
+                    else if (Model.CanJoinChallenge)
+                    {
+                        <form asp-controller="Assignments" asp-action="JoinChallenge" method="post">
+                            <input type="hidden" name="jobId" value="@j.Id" />
+                            <div class="form-check mb-2 small">
+                                <input class="form-check-input" type="checkbox" name="acceptRules" value="true" id="acceptRules" required />
+                                <label class="form-check-label" for="acceptRules">I have read the challenge rules. I understand that several people may do the same task and only the first submission that passes review is rewarded.</label>
+                            </div>
+                            <button class="btn btn-warning w-100 fw-semibold"><i class="bi bi-trophy"></i> Join challenge</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0">@Model.JoinBlockedReason</p>
+                    }
+                }
+            }
+            else if (!signedIn)
+            {
+                <p class="mb-2">Sign in as a Hunter to apply.</p>
+                <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Context.Request.Path" class="btn btn-primary w-100">Sign in</a>
+            }
+            else if (Model.IsAdmin)
+            {
+                <h2 class="h6">Moderation</h2>
+                if (j.Status is not (JobStatus.Completed or JobStatus.Cancelled))
+                {
+                    <form asp-action="Cancel" asp-route-id="@j.Id" method="post" data-confirm="Cancel this job as administrator?">
+                        <input name="reason" class="form-control form-control-sm mb-2" placeholder="Reason (shown to the employer)" />
+                        <button class="btn btn-outline-danger w-100">Cancel job (admin)</button>
+                    </form>
+                }
+                if (j.Mode == JobMode.Standard)
+                {
+                    <a asp-controller="Applications" asp-action="Compare" asp-route-id="@j.Id" class="btn btn-outline-secondary w-100 mt-2">View applicants</a>
+                }
+                else
+                {
+                    <a asp-controller="Assignments" asp-action="Challenge" asp-route-id="@j.Id" class="btn btn-outline-secondary w-100 mt-2">View challenge</a>
+                }
+            }
+            else
+            {
+                <p class="text-muted mb-0">Only Hunters can apply to jobs.</p>
+            }
+        </div></div>
+
+        @if (signedIn && !Model.IsOwner)
+        {
+            <details class="card"><summary class="card-body small text-muted">Report this job</summary>
+                <div class="card-body pt-0">
+                    <form asp-action="Report" asp-route-id="@j.Id" method="post">
+                        <label for="reason" class="form-label small">What is wrong with this post?</label>
+                        <textarea id="reason" name="reason" class="form-control form-control-sm mb-2" rows="3" minlength="10" maxlength="1000" required></textarea>
+                        <button class="btn btn-sm btn-outline-danger">Send report</button>
+                    </form>
+                </div>
+            </details>
+        }
+    </div>
+</div>

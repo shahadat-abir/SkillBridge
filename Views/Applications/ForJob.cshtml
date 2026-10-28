@@ -1,0 +1,38 @@
+@model ApplicationsForJobViewModel
+@{ ViewData["Title"] = "Applications"; var j = Model.Job; }
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a asp-controller="Jobs" asp-action="Mine">My jobs</a></li>
+    <li class="breadcrumb-item"><a asp-controller="Jobs" asp-action="Details" asp-route-id="@j.Id">@j.Title</a></li>
+    <li class="breadcrumb-item active">Applications</li>
+</ol></nav>
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h1 class="h4 mb-0">Applications for “@j.Title”</h1>
+    <a asp-action="Compare" asp-route-id="@j.Id" class="btn btn-primary"><i class="bi bi-layout-three-columns"></i> Compare side by side</a>
+</div>
+@if (Model.Applications.Count == 0)
+{
+    <div class="card"><div class="card-body text-muted text-center py-5">No applications yet.</div></div>
+}
+else
+{
+    <div class="card"><div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Hunter</th><th>Proposed</th><th>Time</th><th>Applied</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            @foreach (var a in Model.Applications)
+            {
+                <tr>
+                    <td><a asp-controller="Profile" asp-action="Details" asp-route-id="@a.HunterId">@a.Hunter.FullName</a><div class="small text-muted">@a.Hunter.Headline</div></td>
+                    <td>@UiHelpers.Money(a.ProposedAmount, j.Currency)</td>
+                    <td>@a.ProposedDays d</td>
+                    <td class="small">@a.AppliedAt.Local()</td>
+                    <td><span class="badge @UiHelpers.Badge(a.Status)">@a.Status.DisplayName()</span></td>
+                    <td class="text-end">
+                        <partial name="_ApplicationActions" model='(a, Model.CanSelect, j.Id, "list")' />
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div></div>
+}

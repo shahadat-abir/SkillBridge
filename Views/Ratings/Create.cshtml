@@ -1,0 +1,31 @@
+@model RatingFormModel
+@{ ViewData["Title"] = "Leave a rating"; }
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card"><div class="card-body p-4">
+            <h1 class="h4">Rate @Model.RateeName</h1>
+            <p class="text-muted small">For the completed job “@Model.JobTitle”. This performance rating is separate from job difficulty and skill levels, and can be left only once.</p>
+            <form asp-action="Create" asp-route-id="@Model.AssignmentId" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <input type="hidden" asp-for="RateeName" />
+                <fieldset class="mb-3">
+                    <legend class="form-label fs-6">Overall rating</legend>
+                    <div class="d-flex gap-2 flex-wrap">
+                        @for (var i = 1; i <= 5; i++)
+                        {
+                            <input type="radio" class="btn-check" name="Stars" id="star-@i" value="@i" checked="@(Model.Stars == i)" required />
+                            <label class="btn btn-outline-warning" for="star-@i">@i <i class="bi bi-star-fill"></i></label>
+                        }
+                    </div>
+                    <span asp-validation-for="Stars" class="text-danger small"></span>
+                </fieldset>
+                <div class="mb-3">
+                    <label asp-for="Comment" class="form-label">Review (quality, timeliness, professionalism)</label>
+                    <textarea asp-for="Comment" class="form-control" rows="4"></textarea>
+                </div>
+                <button class="btn btn-warning">Submit rating</button>
+                <a asp-controller="Assignments" asp-action="Details" asp-route-id="@Model.AssignmentId" class="btn btn-link">Cancel</a>
+            </form>
+        </div></div>
+    </div>
+</div>

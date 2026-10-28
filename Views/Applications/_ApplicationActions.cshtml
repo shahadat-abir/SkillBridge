@@ -1,0 +1,39 @@
+@model (JobApplication App, bool CanSelect, int JobId, string ReturnTo)
+@{ var a = Model.App; }
+@if (User.IsInRole(AppRoles.Employer) && ApplicationRules.IsActive(a.Status))
+{
+    <div class="d-inline-flex flex-wrap gap-1 justify-content-end">
+        @if (a.Status == ApplicationStatus.Submitted)
+        {
+            <form asp-controller="Applications" asp-action="ChangeStatus" method="post">
+                <input type="hidden" name="id" value="@a.Id" /><input type="hidden" name="jobId" value="@Model.JobId" /><input type="hidden" name="returnTo" value="@Model.ReturnTo" />
+                <input type="hidden" name="status" value="@ApplicationStatus.UnderReview" />
+                <button class="btn btn-sm btn-outline-secondary">Under review</button>
+            </form>
+        }
+        @if (a.Status != ApplicationStatus.Shortlisted)
+        {
+            <form asp-controller="Applications" asp-action="ChangeStatus" method="post">
+                <input type="hidden" name="id" value="@a.Id" /><input type="hidden" name="jobId" value="@Model.JobId" /><input type="hidden" name="returnTo" value="@Model.ReturnTo" />
+                <input type="hidden" name="status" value="@ApplicationStatus.Shortlisted" />
+                <button class="btn btn-sm btn-outline-primary">Shortlist</button>
+            </form>
+        }
+        <form asp-controller="Applications" asp-action="ChangeStatus" method="post" data-confirm="Reject this application? The Hunter will be notified.">
+            <input type="hidden" name="id" value="@a.Id" /><input type="hidden" name="jobId" value="@Model.JobId" /><input type="hidden" name="returnTo" value="@Model.ReturnTo" />
+            <input type="hidden" name="status" value="@ApplicationStatus.Rejected" />
+            <button class="btn btn-sm btn-outline-danger">Reject</button>
+        </form>
+        @if (Model.CanSelect)
+        {
+            <form asp-controller="Applications" asp-action="Select" method="post" data-confirm="Select @a.Hunter.FullName for this job at @UiHelpers.Money(a.ProposedAmount)? They will be asked to accept.">
+                <input type="hidden" name="id" value="@a.Id" /><input type="hidden" name="jobId" value="@Model.JobId" />
+                <button class="btn btn-sm btn-success"><i class="bi bi-check2-circle"></i> Select</button>
+            </form>
+        }
+    </div>
+}
+@if (a.AttachmentPath != null)
+{
+    <a asp-controller="Applications" asp-action="Attachment" asp-route-id="@a.Id" class="btn btn-sm btn-link"><i class="bi bi-paperclip"></i> File</a>
+}

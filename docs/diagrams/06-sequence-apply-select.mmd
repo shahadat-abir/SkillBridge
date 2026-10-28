@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor H as Hunter
+    actor E as Employer
+    participant AC as ApplicationsController
+    participant AS as ApplicationService
+    participant DB as SQL Server
+    participant N as NotificationService
+    H->>AC: POST /Applications/Apply/{jobId} (+anti-forgery token)
+    AC->>AS: ApplyAsync(hunterId, form)
+    AS->>DB: load job, check deadline/status/duplicate
+    AS->>N: Add(employer, NewApplication)
+    AS->>DB: INSERT JobApplication + Notification + AuditLog
+    E->>AC: GET /Applications/Compare/{jobId}
+    AC->>AS: CompareAsync(employerId, jobId)
+    AS->>DB: applications + hunter skills + ratings + completed jobs
+    AS-->>E: comparison rows (skill match lines, rating, price, time)
+    E->>AC: POST /Applications/Select (id)
+    AC->>AS: SelectAsync(employerId, applicationId)
+    AS->>DB: BEGIN TRANSACTION
+    AS->>DB: verify owner, job open, no active assignment, application active
+    AS->>DB: application=Accepted, INSERT TaskAssignment(PendingAcceptance), job=Assigned, new ConcurrencyStamp
+    AS->>N: Add(hunter, HunterSelected)
+    AS->>DB: COMMIT
+    AS-->>E: redirect to assignment

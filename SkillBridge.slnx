@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="SkillBridge.csproj" />
+  <Project Path="tests/SkillBridge.Tests/SkillBridge.Tests.csproj" />
+</Solution>

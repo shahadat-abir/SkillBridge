@@ -1,0 +1,15 @@
+@model PagerModel
+@if (Model.TotalPages > 1)
+{
+    <nav aria-label="Pagination">
+        <ul class="pagination justify-content-center flex-wrap">
+            @for (var p = 1; p <= Model.TotalPages; p++)
+            {
+                var values = new Dictionary<string, string?>(Model.RouteValues) { ["page"] = p.ToString() };
+                <li class="page-item @(p == Model.Page ? "active" : "")">
+                    <a class="page-link" asp-action="@Model.Action" asp-controller="@Model.Controller" asp-all-route-data="values">@p</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}

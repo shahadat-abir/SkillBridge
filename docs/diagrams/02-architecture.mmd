@@ -1,0 +1,15 @@
+flowchart TB
+    Browser["Browser (Razor views, Bootstrap 5, jQuery validation)"]
+    subgraph App["ASP.NET Core MVC (.NET 10) — SkillBridge"]
+        MW["Middleware: HTTPS, security headers, static files, rate limiter, authentication, authorization, anti-forgery filter"]
+        C["Controllers: Home, Account, Jobs, Applications, Assignments, Payments, Ratings, Notifications, Profile, Dashboard, Admin"]
+        S["Services: JobService, ApplicationService, AssignmentService, PaymentService, RatingService, ReputationService, NotificationService, AuditService, ProfileService, DashboardService, FileStorageService"]
+        D["Domain rules: JobRules, ApplicationRules, PaymentRules, ChallengeRules, SkillMatcher"]
+        EF["EF Core ApplicationDbContext + ASP.NET Core Identity"]
+    end
+    DB[("SQL Server LocalDB — SkillBridgeDb")]
+    FS[("App_Data/uploads (outside wwwroot)")]
+    Browser -->|HTTPS| MW --> C --> S
+    S --> D
+    S --> EF --> DB
+    S --> FS

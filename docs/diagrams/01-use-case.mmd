@@ -1,0 +1,30 @@
+flowchart LR
+    Employer([Employer])
+    Hunter([Hunter])
+    Admin([Admin])
+    subgraph SkillBridge
+        UC1(Register / log in)
+        UC2(Manage profile)
+        UC3(Manage skills & skill levels)
+        UC4(Post / edit / close / cancel job)
+        UC5(Search & filter jobs)
+        UC6(Apply / submit bid)
+        UC7(Compare applicants)
+        UC8(Shortlist / reject / select Hunter)
+        UC9(Accept or decline assignment)
+        UC10(Join challenge)
+        UC11(Submit work / resubmit)
+        UC12(Approve work / request revision)
+        UC13(Review challenge submissions in order)
+        UC14(Record simulated payment)
+        UC15(Rate completed work)
+        UC16(View notifications)
+        UC17(Manage users, roles, suspension)
+        UC18(Manage categories & skills)
+        UC19(Moderate reports & cancel jobs)
+        UC20(View audit log & ledger)
+        UC21(Report a job)
+    end
+    Employer --- UC1 & UC2 & UC4 & UC7 & UC8 & UC12 & UC13 & UC14 & UC15 & UC16 & UC21
+    Hunter --- UC1 & UC2 & UC3 & UC5 & UC6 & UC9 & UC10 & UC11 & UC15 & UC16 & UC21
+    Admin --- UC1 & UC17 & UC18 & UC19 & UC20

@@ -1,0 +1,46 @@
+@model SubmitWorkModel
+@{ ViewData["Title"] = "Submit work"; }
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.AssignmentId">@Model.JobTitle</a></li>
+    <li class="breadcrumb-item active">Submit work</li>
+</ol></nav>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card"><div class="card-body p-4">
+            <h1 class="h4">Submit work for “@Model.JobTitle”</h1>
+            @if (Model.IsChallenge)
+            {
+                <div class="alert alert-warning small"><i class="bi bi-trophy"></i> Challenge: the server records the exact time you submit. Submissions are reviewed in that order and the first one that passes review wins.</div>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.SubmissionInstructions))
+            {
+                <div class="alert alert-light border small"><strong>Instructions:</strong> <span class="pre-wrap">@Model.SubmissionInstructions</span></div>
+            }
+            @if (!string.IsNullOrWhiteSpace(Model.LatestFeedback))
+            {
+                <div class="alert alert-info small"><strong>Latest employer feedback:</strong> <span class="pre-wrap">@Model.LatestFeedback</span></div>
+            }
+            <form asp-action="Submit" asp-route-id="@Model.AssignmentId" method="post" enctype="multipart/form-data" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="6" placeholder="What did you deliver? What changed since the last version?"></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ExternalLink" class="form-label"></label>
+                    <input asp-for="ExternalLink" class="form-control" placeholder="https://" />
+                    <span asp-validation-for="ExternalLink" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="File" class="form-label"></label>
+                    <input asp-for="File" type="file" class="form-control" accept=".pdf,.docx,.xlsx,.pptx,.zip,.png,.jpg,.jpeg,.txt" />
+                    <div class="form-text">Provide a file, a link, or both.</div>
+                </div>
+                <button type="submit" class="btn btn-primary" data-loading-text="Uploading…"><i class="bi bi-upload"></i> Submit</button>
+                <a asp-action="Details" asp-route-id="@Model.AssignmentId" class="btn btn-link">Cancel</a>
+            </form>
+        </div></div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,32 @@
+@model AssignmentListViewModel
+@{ ViewData["Title"] = Model.ForEmployer ? "Assignments" : "My work"; }
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+@if (Model.Assignments.Count == 0)
+{
+    <div class="card"><div class="card-body text-center text-muted py-5">
+        @(Model.ForEmployer ? "No Hunter has been assigned to your jobs yet." : "You have no assignments yet. Apply to jobs or join a challenge.")
+    </div></div>
+}
+else
+{
+    <div class="card"><div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Job</th>@if (Model.ForEmployer) { <th>Hunter</th> }<th>Type</th><th>Amount</th><th>Due</th><th>Status</th><th>Payment</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var a in Model.Assignments)
+            {
+                <tr>
+                    <td>@a.Job.Title</td>
+                    @if (Model.ForEmployer) { <td>@a.Hunter.FullName</td> }
+                    <td>@(a.IsChallengeParticipant ? (a.IsWinner ? "Challenge (winner)" : "Challenge") : "Standard")</td>
+                    <td>@UiHelpers.Money(a.AgreedAmount, a.Job.Currency)</td>
+                    <td class="small">@a.DueDate.Local("dd MMM yyyy")</td>
+                    <td><span class="badge @UiHelpers.Badge(a.Status)">@a.Status.DisplayName()</span></td>
+                    <td>@if (a.Payment != null) { <span class="badge @UiHelpers.Badge(a.Payment.Status)">@a.Payment.Status.DisplayName()</span> } else { <span class="text-muted small">—</span> }</td>
+                    <td class="text-end"><a asp-action="Details" asp-route-id="@a.Id" class="btn btn-sm btn-outline-primary">Open</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div></div>
+}

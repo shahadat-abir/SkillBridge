@@ -1,0 +1,49 @@
+@model EmployerDashboardViewModel
+@{ ViewData["Title"] = "Employer dashboard"; }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Employer dashboard</h1>
+    <a asp-controller="Jobs" asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Post a job</a>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Active jobs", Model.ActiveJobs.ToString(), "bi-briefcase")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Applications received", Model.ApplicationsReceived.ToString(), "bi-people")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Awaiting selection", Model.JobsAwaitingSelection.ToString(), "bi-person-check")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("In progress", Model.AssignmentsInProgress.ToString(), "bi-tools")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Submissions to review", Model.SubmissionsAwaitingReview.ToString(), "bi-eye")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Completed jobs", Model.CompletedJobs.ToString(), "bi-check2-all")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Payments due", UiHelpers.Money(Model.PaymentsDue), "bi-cash")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Recorded paid", UiHelpers.Money(Model.PaymentsPaid), "bi-cash-coin")' /></div>
+</div>
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">Recent jobs <a asp-controller="Jobs" asp-action="Mine" class="small">All</a></div>
+            <ul class="list-group list-group-flush">
+                @if (Model.RecentJobs.Count == 0) { <li class="list-group-item text-muted small">You have not posted a job yet.</li> }
+                @foreach (var j in Model.RecentJobs)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><a asp-controller="Jobs" asp-action="Details" asp-route-id="@j.Id">@j.Title</a><br />
+                            <span class="small text-muted">@(j.Mode == JobMode.Challenge ? $"{j.Assignments.Count}/{j.MaxParticipants} participants" : $"{j.Applications.Count} application(s)")</span></span>
+                        <span class="badge @UiHelpers.Badge(j.Status)">@j.Status.DisplayName()</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">Submissions awaiting your review</div>
+            <ul class="list-group list-group-flush">
+                @if (Model.PendingSubmissions.Count == 0) { <li class="list-group-item text-muted small">Nothing to review.</li> }
+                @foreach (var s in Model.PendingSubmissions)
+                {
+                    <li class="list-group-item small">
+                        <a asp-controller="Assignments" asp-action="@(s.TaskAssignment.IsChallengeParticipant ? "Challenge" : "Details")" asp-route-id="@(s.TaskAssignment.IsChallengeParticipant ? s.TaskAssignment.JobId : s.TaskAssignmentId)">@s.TaskAssignment.Job.Title</a>
+                        <div class="text-muted">Version @s.Version by @s.TaskAssignment.Hunter.FullName · @s.SubmittedAt.Local("dd MMM, h:mm tt")</div>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

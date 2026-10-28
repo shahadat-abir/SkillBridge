@@ -1,0 +1,74 @@
+@model Payment
+@{
+    ViewData["Title"] = "Payment " + Model.LedgerReference;
+    var uid = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    var isEmployer = Model.EmployerId == uid;
+    var isAdmin = User.IsInRole(AppRoles.Admin);
+}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a asp-action="Index">Payments</a></li>
+    <li class="breadcrumb-item active">@Model.LedgerReference</li>
+</ol></nav>
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card sb-simulated mb-3"><div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="small text-muted">Simulated ledger entry</div>
+                    <h1 class="h4 mb-1"><code>@Model.LedgerReference</code></h1>
+                    <div>For <a asp-controller="Assignments" asp-action="Details" asp-route-id="@Model.TaskAssignmentId">@Model.TaskAssignment.Job.Title</a></div>
+                </div>
+                <span class="badge fs-6 @UiHelpers.Badge(Model.Status)">@Model.Status.DisplayName()</span>
+            </div>
+            <hr />
+            <dl class="row mb-0">
+                <dt class="col-5">Amount</dt><dd class="col-7 fw-semibold">@UiHelpers.Money(Model.Amount, Model.Currency)</dd>
+                <dt class="col-5">Employer (payer)</dt><dd class="col-7">@(Model.Employer.CompanyName ?? Model.Employer.FullName)</dd>
+                <dt class="col-5">Hunter (payee)</dt><dd class="col-7">@Model.Hunter.FullName</dd>
+                <dt class="col-5">Method</dt><dd class="col-7">@(Model.Method?.DisplayName() ?? "—")</dd>
+                <dt class="col-5">Off-platform reference</dt><dd class="col-7">@(Model.ExternalReference ?? "—") <span class="small text-muted">(typed by employer, not verified)</span></dd>
+                <dt class="col-5">Created</dt><dd class="col-7">@Model.CreatedAt.Local()</dd>
+                <dt class="col-5">Paid at</dt><dd class="col-7">@Model.PaidAt.Local()</dd>
+            </dl>
+        </div></div>
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            @if (isEmployer && Model.Status == PaymentStatus.Approved)
+            {
+                <a asp-action="MarkPaid" asp-route-id="@Model.Id" class="btn btn-success"><i class="bi bi-check2-circle"></i> Record payment</a>
+                <form asp-action="MarkFailed" asp-route-id="@Model.Id" method="post" class="d-flex gap-2" data-confirm="Record that the payment attempt failed?">
+                    <input name="note" class="form-control" placeholder="What went wrong?" maxlength="500" />
+                    <button class="btn btn-outline-danger">Mark failed</button>
+                </form>
+            }
+            @if ((isEmployer || isAdmin) && Model.Status == PaymentStatus.Failed)
+            {
+                <form asp-action="Retry" asp-route-id="@Model.Id" method="post"><button class="btn btn-outline-primary">Mark as due again</button></form>
+            }
+            @if (isAdmin && Model.Status == PaymentStatus.Paid)
+            {
+                <form asp-action="Refund" asp-route-id="@Model.Id" method="post" class="d-flex gap-2" data-confirm="Record a refund for this payment?">
+                    <input name="note" class="form-control" placeholder="Refund note" maxlength="500" />
+                    <button class="btn btn-outline-dark">Record refund</button>
+                </form>
+            }
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header">Payment history</div>
+            <div class="card-body">
+                <div class="sb-timeline">
+                    @foreach (var h in Model.History.OrderBy(h => h.CreatedAt))
+                    {
+                        <div class="sb-timeline-item small">
+                            <div><strong>@(h.FromStatus?.DisplayName() ?? "—") → @h.ToStatus.DisplayName()</strong></div>
+                            <div class="text-muted">@h.CreatedAt.Local()</div>
+                            @if (h.Note != null) { <div>@h.Note</div> }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

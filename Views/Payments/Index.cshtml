@@ -1,0 +1,31 @@
+@model List<Payment>
+@{ ViewData["Title"] = "Payments"; var isAdmin = User.IsInRole(AppRoles.Admin); }
+<h1 class="h3 mb-2">Payment tracking</h1>
+<div class="alert sb-simulated border small"><i class="bi bi-info-circle"></i> <strong>Simulated ledger.</strong> SkillBridge records payment status only. It does not connect to a payment gateway, store card details or move money. “Paid” means the employer recorded an off-platform payment.</div>
+@if (Model.Count == 0)
+{
+    <div class="card"><div class="card-body text-center text-muted py-5">No payment records yet. A record is created when a Hunter accepts an assignment (or wins a challenge).</div></div>
+}
+else
+{
+    <div class="card"><div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Ledger ref</th><th>Job</th><th>Employer</th><th>Hunter</th><th class="text-end">Amount</th><th>Status</th><th>Updated</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td><code>@p.LedgerReference</code></td>
+                    <td>@p.TaskAssignment.Job.Title</td>
+                    <td>@(p.Employer.CompanyName ?? p.Employer.FullName)</td>
+                    <td>@p.Hunter.FullName</td>
+                    <td class="text-end">@UiHelpers.Money(p.Amount, p.Currency)</td>
+                    <td><span class="badge @UiHelpers.Badge(p.Status)">@p.Status.DisplayName()</span></td>
+                    <td class="small">@p.UpdatedAt.Local("dd MMM yyyy")</td>
+                    <td class="text-end"><a asp-action="Details" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Details</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div></div>
+}

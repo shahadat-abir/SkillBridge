@@ -1,0 +1,100 @@
+@model JobSearchViewModel
+@{
+    ViewData["Title"] = "Browse jobs";
+    var q = Model.Query;
+    var routeValues = new Dictionary<string, string?>
+    {
+        ["Keyword"] = q.Keyword, ["CategoryId"] = q.CategoryId?.ToString(), ["SkillId"] = q.SkillId?.ToString(),
+        ["Difficulty"] = q.Difficulty?.ToString(), ["Mode"] = q.Mode?.ToString(), ["MinBudget"] = q.MinBudget?.ToString(),
+        ["MaxBudget"] = q.MaxBudget?.ToString(), ["Status"] = q.Status?.ToString(), ["AllStatuses"] = q.AllStatuses ? "true" : null, ["Sort"] = q.Sort
+    };
+}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Browse jobs</h1>
+    @if (User.IsInRole(AppRoles.Employer))
+    {
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Post a job</a>
+    }
+</div>
+<div class="row g-4">
+    <aside class="col-lg-3">
+        <form method="get" asp-action="Index" class="card"><div class="card-body">
+            <div class="mb-2">
+                <label class="form-label small fw-semibold" for="Keyword">Keyword</label>
+                <input class="form-control form-control-sm" id="Keyword" name="Keyword" value="@q.Keyword" placeholder="Title, description or skill" />
+            </div>
+            <div class="mb-2">
+                <label class="form-label small fw-semibold" for="CategoryId">Category</label>
+                <select class="form-select form-select-sm" id="CategoryId" name="CategoryId" asp-items="Model.Categories"><option value="">All categories</option></select>
+            </div>
+            <div class="mb-2">
+                <label class="form-label small fw-semibold" for="SkillId">Required skill</label>
+                <select class="form-select form-select-sm" id="SkillId" name="SkillId" asp-items="Model.Skills"><option value="">Any skill</option></select>
+            </div>
+            <div class="mb-2">
+                <label class="form-label small fw-semibold" for="Difficulty">Difficulty (stars)</label>
+                <select class="form-select form-select-sm" id="Difficulty" name="Difficulty">
+                    <option value="">Any difficulty</option>
+                    @foreach (var d in Enum.GetValues<JobDifficulty>())
+                    {
+                        <!option value="@d" selected="@(q.Difficulty == d)">@d.StarsText() @d.DisplayName()</!option>
+                    }
+                </select>
+            </div>
+            <div class="mb-2">
+                <label class="form-label small fw-semibold" for="Mode">Mode</label>
+                <select class="form-select form-select-sm" id="Mode" name="Mode">
+                    <option value="">Any</option>
+                    <!option value="Standard" selected="@(q.Mode == JobMode.Standard)">Standard</!option>
+                    <!option value="Challenge" selected="@(q.Mode == JobMode.Challenge)">Challenge</!option>
+                </select>
+            </div>
+            <div class="row g-2 mb-2">
+                <div class="col-6"><label class="form-label small fw-semibold" for="MinBudget">Min budget</label><input type="number" min="0" step="1" class="form-control form-control-sm" id="MinBudget" name="MinBudget" value="@q.MinBudget" /></div>
+                <div class="col-6"><label class="form-label small fw-semibold" for="MaxBudget">Max budget</label><input type="number" min="0" step="1" class="form-control form-control-sm" id="MaxBudget" name="MaxBudget" value="@q.MaxBudget" /></div>
+            </div>
+            <div class="mb-2">
+                <label class="form-label small fw-semibold" for="Status">Status</label>
+                <select class="form-select form-select-sm" id="Status" name="Status">
+                    <option value="">Open &amp; accepting</option>
+                    @foreach (var st in Enum.GetValues<JobStatus>())
+                    {
+                        <!option value="@st" selected="@(q.Status == st)">@st.DisplayName()</!option>
+                    }
+                </select>
+            </div>
+            <div class="form-check mb-2">
+                <input class="form-check-input" type="checkbox" id="AllStatuses" name="AllStatuses" value="true" checked="@q.AllStatuses" />
+                <label class="form-check-label small" for="AllStatuses">Include all statuses</label>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-semibold" for="Sort">Sort by</label>
+                <select class="form-select form-select-sm" id="Sort" name="Sort">
+                    @foreach (var (val, label) in new[] { ("newest", "Newest"), ("deadline", "Application deadline"), ("budget_desc", "Budget: high to low"), ("budget_asc", "Budget: low to high"), ("difficulty", "Difficulty: easiest first") })
+                    {
+                        <!option value="@val" selected="@(q.Sort == val)">@label</!option>
+                    }
+                </select>
+            </div>
+            <button class="btn btn-primary btn-sm w-100" type="submit"><i class="bi bi-funnel"></i> Apply filters</button>
+            <a asp-action="Index" class="btn btn-link btn-sm w-100">Reset</a>
+        </div></form>
+    </aside>
+    <section class="col-lg-9">
+        <p class="text-muted small">@Model.Results.TotalCount job(s) found</p>
+        @if (Model.Results.Items.Count == 0)
+        {
+            <div class="card"><div class="card-body text-center text-muted py-5"><i class="bi bi-search fs-1 d-block mb-2"></i>No jobs match these filters.</div></div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var j in Model.Results.Items)
+                {
+                    <div class="col-md-6"><partial name="_JobCard" model="j" /></div>
+                }
+            </div>
+            <div class="mt-3"><partial name="_Pager" model="@(new PagerModel { Page = Model.Results.Page, TotalPages = Model.Results.TotalPages, Action = "Index", Controller = "Jobs", RouteValues = routeValues })" /></div>
+        }
+    </section>
+</div>

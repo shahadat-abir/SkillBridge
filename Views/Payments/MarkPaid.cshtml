@@ -1,0 +1,33 @@
+@model MarkPaidModel
+@{ ViewData["Title"] = "Record payment"; var p = (Payment?)ViewBag.Payment; }
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card"><div class="card-body p-4">
+            <h1 class="h4">Record payment</h1>
+            @if (p != null)
+            {
+                <p>@UiHelpers.Money(p.Amount, p.Currency) to <strong>@p.Hunter.FullName</strong> for “@p.TaskAssignment.Job.Title”.</p>
+            }
+            <div class="alert alert-warning small"><i class="bi bi-exclamation-triangle"></i> SkillBridge does not transfer money. Only record a payment you have actually made outside the platform. Never enter card numbers or passwords.</div>
+            <form asp-action="MarkPaid" asp-route-id="@Model.PaymentId" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <div class="mb-3">
+                    <label asp-for="Method" class="form-label"></label>
+                    <select asp-for="Method" asp-items="Html.GetEnumSelectList<PaymentMethod>()" class="form-select"><option value="">Choose…</option></select>
+                    <span asp-validation-for="Method" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ExternalReference" class="form-label"></label>
+                    <input asp-for="ExternalReference" class="form-control" autocomplete="off" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Note" class="form-label"></label>
+                    <textarea asp-for="Note" class="form-control" rows="2"></textarea>
+                </div>
+                <button class="btn btn-success">Record as paid</button>
+                <a asp-action="Details" asp-route-id="@Model.PaymentId" class="btn btn-link">Cancel</a>
+            </form>
+        </div></div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

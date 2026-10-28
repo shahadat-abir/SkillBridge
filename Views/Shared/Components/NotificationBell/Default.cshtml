@@ -1,0 +1,8 @@
+@model int
+<a class="nav-link position-relative me-lg-2" asp-controller="Notifications" asp-action="Index" aria-label="Notifications (@Model unread)">
+    <i class="bi bi-bell fs-5"></i>
+    @if (Model > 0)
+    {
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">@(Model > 99 ? "99+" : Model.ToString())</span>
+    }
+</a>

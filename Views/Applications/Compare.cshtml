@@ -1,0 +1,182 @@
+@model ComparisonViewModel
+@{
+    var j = Model.Job;
+    ViewData["Title"] = "Compare applicants";
+    var sorts = new[] { ("applied", "Application date"), ("match", "Skill match"), ("rating", "Rating"), ("completed", "Completed jobs"), ("price", "Lowest price"), ("time", "Fastest") };
+}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a asp-controller="Jobs" asp-action="Details" asp-route-id="@j.Id">@j.Title</a></li>
+    <li class="breadcrumb-item active">Compare applicants</li>
+</ol></nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">Compare applicants</h1>
+        <div class="small text-muted">
+            Budget @UiHelpers.Money(j.Budget, j.Currency) · expected @j.ExpectedCompletionDays day(s) ·
+            <span class="badge sb-difficulty">@j.Difficulty.StarsText() @j.Difficulty.DisplayName()</span>
+            · required: @foreach (var s in j.RequiredSkills) { <span class="badge sb-skill-level me-1">@s.Skill.Name ≥ @s.MinimumLevel</span> }
+        </div>
+    </div>
+    <div class="btn-group btn-group-sm flex-wrap" role="group" aria-label="Sort applicants">
+        @foreach (var (key, label) in sorts)
+        {
+            <a class="btn @(Model.Sort == key ? "btn-primary" : "btn-outline-primary")" asp-action="Compare" asp-route-id="@j.Id" asp-route-sort="@key">@label</a>
+        }
+    </div>
+</div>
+
+@if (Model.HasActiveAssignment)
+{
+    <div class="alert alert-info small"><i class="bi bi-info-circle"></i> A Hunter has already been selected for this job. Selection is disabled.</div>
+}
+<div class="alert alert-light border small">
+    <i class="bi bi-lightbulb"></i> Highlights (<span class="badge text-bg-success">Lowest price</span>, <span class="badge text-bg-success">Fastest</span>, <span class="badge text-bg-success">Best skill match</span>, <span class="badge text-bg-success">Highest rated</span>) are informational only — <strong>you make the decision</strong>.
+    Skill levels are <strong>self-reported</strong> by Hunters; ratings and completed jobs come from verified completed work on SkillBridge. No combined score is calculated.
+</div>
+
+@if (Model.Rows.Count == 0)
+{
+    <div class="card"><div class="card-body text-center text-muted py-5">No applications to compare yet.</div></div>
+}
+else
+{
+    <form method="get" asp-action="Compare" asp-route-id="@j.Id" class="mb-2 d-flex gap-2 align-items-center flex-wrap">
+        <input type="hidden" name="sort" value="@Model.Sort" />
+        <span class="small text-muted">Compare only:</span>
+        @foreach (var r in Model.Rows)
+        {
+            <div class="form-check form-check-inline small mb-0">
+                <input class="form-check-input" type="checkbox" name="ids" value="@r.ApplicationId" id="pick-@r.ApplicationId" checked="@Model.SelectedIds.Contains(r.ApplicationId)" />
+                <label class="form-check-label" for="pick-@r.ApplicationId">@r.Name</label>
+            </div>
+        }
+        <button class="btn btn-sm btn-outline-secondary">Apply</button>
+        @if (Model.SelectedIds.Count > 0) { <a asp-action="Compare" asp-route-id="@j.Id" asp-route-sort="@Model.Sort" class="btn btn-sm btn-link">Show all</a> }
+    </form>
+
+    <div class="card"><div class="table-responsive">
+        <table class="table table-bordered table-compare mb-0 small">
+            <tbody>
+                <tr>
+                    <th scope="row">Applicant</th>
+                    @foreach (var r in Model.Rows)
+                    {
+                        <td>
+                            <a class="fw-semibold" asp-controller="Profile" asp-action="Details" asp-route-id="@r.HunterId">@r.Name</a>
+                            <div class="text-muted">@r.Headline</div>
+                        </td>
+                    }
+                </tr>
+                <tr>
+                    <th scope="row">Application status</th>
+                    @foreach (var r in Model.Rows) { <td><span class="badge @UiHelpers.Badge(r.Status)">@r.Status.DisplayName()</span></td> }
+                </tr>
+                <tr>
+                    <th scope="row">Required-skill match<br /><span class="fw-normal text-muted">(self-reported levels)</span></th>
+                    @foreach (var r in Model.Rows)
+                    {
+                        <td>
+                            <div class="mb-1"><strong>@r.Match.Met / @r.Match.Required</strong> at required level (@r.Match.Percent%)
+                                @if (r.IsBestSkillMatch) { <span class="badge text-bg-success">Best skill match</span> }
+                            </div>
+                            <ul class="list-unstyled mb-0">
+                                @foreach (var l in r.Match.Lines)
+                                {
+                                    <li>
+                                        @if (l.MeetsLevel) { <i class="bi bi-check-circle-fill sb-match-meets"></i> }
+                                        else if (l.HasSkill) { <i class="bi bi-exclamation-circle sb-match-below"></i> }
+                                        else { <i class="bi bi-x-circle sb-match-missing"></i> }
+                                        @l.Name: @(l.HunterLevel?.ToString() ?? "—") <span class="text-muted">@(l.Years.HasValue ? $"(needs {l.Required}, {l.Years} yr)" : $"(needs {l.Required})")</span>
+                                    </li>
+                                }
+                            </ul>
+                        </td>
+                    }
+                </tr>
+                <tr>
+                    <th scope="row">Performance rating</th>
+                    @foreach (var r in Model.Rows)
+                    {
+                        <td><partial name="_Stars" model="(r.AverageRating, r.RatingCount)" />
+                            @if (r.IsHighestRated) { <span class="badge text-bg-success">Highest rated</span> }</td>
+                    }
+                </tr>
+                <tr>
+                    <th scope="row">Completed jobs<br /><span class="fw-normal text-muted">(verified on SkillBridge)</span></th>
+                    @foreach (var r in Model.Rows) { <td>@r.CompletedJobs</td> }
+                </tr>
+                <tr>
+                    <th scope="row">Proposed price</th>
+                    @foreach (var r in Model.Rows)
+                    {
+                        <td>
+                            <strong>@UiHelpers.Money(r.ProposedAmount, j.Currency)</strong>
+                            @if (r.IsLowestPrice) { <span class="badge text-bg-success">Lowest price</span> }
+                            <div>@(r.WithinBudget ? "Within budget" : "Above budget")</div>
+                        </td>
+                    }
+                </tr>
+                <tr>
+                    <th scope="row">Estimated completion</th>
+                    @foreach (var r in Model.Rows)
+                    {
+                        <td>
+                            <strong>@r.ProposedDays day(s)</strong>
+                            @if (r.IsFastest) { <span class="badge text-bg-success">Fastest</span> }
+                            <div>@(r.WithinExpectedTime ? "Within expected time" : "Longer than expected")</div>
+                        </td>
+                    }
+                </tr>
+                <tr>
+                    <th scope="row">Applied on</th>
+                    @foreach (var r in Model.Rows) { <td>@r.AppliedAt.Local()</td> }
+                </tr>
+                <tr>
+                    <th scope="row">Relevant experience<br /><span class="fw-normal text-muted">(for this job)</span></th>
+                    @foreach (var r in Model.Rows) { <td class="pre-wrap">@(r.RelevantExperience ?? "—")</td> }
+                </tr>
+                <tr>
+                    <th scope="row">Profile experience</th>
+                    @foreach (var r in Model.Rows) { <td class="pre-wrap">@(r.Experience ?? "—")</td> }
+                </tr>
+                <tr>
+                    <th scope="row">Education</th>
+                    @foreach (var r in Model.Rows) { <td class="pre-wrap">@(r.Education ?? "—")</td> }
+                </tr>
+                <tr>
+                    <th scope="row">Portfolio</th>
+                    @foreach (var r in Model.Rows)
+                    {
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(r.PortfolioUrl)) { <a href="@r.PortfolioUrl" target="_blank" rel="noopener noreferrer nofollow">Open portfolio <i class="bi bi-box-arrow-up-right"></i></a> }
+                            else { <span class="text-muted">—</span> }
+                        </td>
+                    }
+                </tr>
+                <tr>
+                    <th scope="row">Availability</th>
+                    @foreach (var r in Model.Rows) { <td>@(r.Availability ?? "—")</td> }
+                </tr>
+                <tr>
+                    <th scope="row">Cover letter</th>
+                    @foreach (var r in Model.Rows)
+                    {
+                        <td><details><summary>Read</summary><div class="pre-wrap mt-1">@r.CoverLetter</div></details></td>
+                    }
+                </tr>
+                <tr>
+                    <th scope="row">Decision</th>
+                    @foreach (var r in Model.Rows)
+                    {
+                        var app = new JobApplication { Id = r.ApplicationId, Status = r.Status, ProposedAmount = r.ProposedAmount, AttachmentPath = r.HasAttachment ? "x" : null, Hunter = new ApplicationUser { FullName = r.Name } };
+                        <td>
+                            <a asp-controller="Profile" asp-action="Details" asp-route-id="@r.HunterId" class="btn btn-sm btn-outline-secondary mb-1">Full profile</a>
+                            <partial name="_ApplicationActions" model='(app, Model.CanSelect, j.Id, "compare")' />
+                        </td>
+                    }
+                </tr>
+            </tbody>
+        </table>
+    </div></div>
+}

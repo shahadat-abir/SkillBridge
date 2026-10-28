@@ -1,0 +1,192 @@
+@model AssignmentDetailsViewModel
+@{
+    var a = Model.Assignment;
+    var j = a.Job;
+    ViewData["Title"] = "Assignment";
+    var steps = new[] { "Selected", "Accepted", "Work submitted", "Reviewed", "Completed" };
+    var stepIndex = a.Status switch
+    {
+        AssignmentStatus.PendingAcceptance => 0,
+        AssignmentStatus.InProgress => 1,
+        AssignmentStatus.RevisionRequested => 1,
+        AssignmentStatus.Submitted => 2,
+        AssignmentStatus.Completed => 4,
+        _ => -1
+    };
+}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a asp-action="Index">Assignments</a></li>
+    <li class="breadcrumb-item active">@j.Title</li>
+</ol></nav>
+
+<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+    <div>
+        <h1 class="h4 mb-1">@j.Title</h1>
+        <div class="small text-muted">
+            @(a.IsChallengeParticipant ? "Challenge participant" : "Standard assignment") ·
+            Hunter: <a asp-controller="Profile" asp-action="Details" asp-route-id="@a.HunterId">@a.Hunter.FullName</a> ·
+            Employer: <a asp-controller="Profile" asp-action="Details" asp-route-id="@j.EmployerId">@(j.Employer.CompanyName ?? j.Employer.FullName)</a>
+        </div>
+    </div>
+    <div class="text-end">
+        <span class="badge fs-6 @UiHelpers.Badge(a.Status)">@a.Status.DisplayName()</span>
+        @if (a.IsWinner) { <div><span class="badge text-bg-warning mt-1"><i class="bi bi-trophy"></i> Challenge winner</span></div> }
+    </div>
+</div>
+
+@if (stepIndex >= 0 && !a.IsChallengeParticipant)
+{
+    <div class="card mb-3"><div class="card-body">
+        <div class="d-flex justify-content-between text-center small flex-wrap gap-2">
+            @for (var i = 0; i < steps.Length; i++)
+            {
+                <div class="flex-fill">
+                    <div class="rounded-circle mx-auto mb-1 d-flex align-items-center justify-content-center @(i <= stepIndex ? "bg-primary text-white" : "bg-light border")" style="width:2rem;height:2rem;">@(i + 1)</div>
+                    @steps[i]
+                </div>
+            }
+        </div>
+    </div></div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        @if (Model.IsHunter && a.Status == AssignmentStatus.PendingAcceptance)
+        {
+            <div class="card border-info mb-3"><div class="card-body">
+                <h2 class="h5">You were selected for this job</h2>
+                <p class="mb-2">Agreed amount: <strong>@UiHelpers.Money(a.AgreedAmount, j.Currency)</strong> · work deadline @j.ProjectDeadline.Local()</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <form asp-action="Accept" asp-route-id="@a.Id" method="post"><button class="btn btn-success"><i class="bi bi-check2"></i> Accept assignment</button></form>
+                    <form asp-action="Decline" asp-route-id="@a.Id" method="post" class="d-flex gap-2" data-confirm="Decline this assignment? The employer will be able to select someone else.">
+                        <input name="reason" class="form-control" placeholder="Reason (optional)" maxlength="300" />
+                        <button class="btn btn-outline-danger">Decline</button>
+                    </form>
+                </div>
+            </div></div>
+        }
+        @if (Model.IsHunter && a.Status == AssignmentStatus.RevisionRequested)
+        {
+            <div class="alert alert-warning"><i class="bi bi-arrow-repeat"></i> The employer requested a revision. See the feedback below and submit a new version.</div>
+        }
+        @if (Model.CanSubmit)
+        {
+            <a asp-action="Submit" asp-route-id="@a.Id" class="btn btn-primary mb-3"><i class="bi bi-upload"></i> @(a.Submissions.Count > 0 ? "Submit a new version" : "Submit work")</a>
+        }
+        @if (a.IsChallengeParticipant && Model.IsEmployer)
+        {
+            <a asp-action="Challenge" asp-route-id="@j.Id" class="btn btn-outline-primary mb-3">Open challenge review board</a>
+        }
+
+        <div class="card mb-3">
+            <div class="card-header">Submission and revision history</div>
+            <div class="card-body">
+                @if (a.Submissions.Count == 0)
+                {
+                    <p class="text-muted mb-0">No work has been submitted yet.</p>
+                }
+                else
+                {
+                    <div class="sb-timeline">
+                        @foreach (var s in a.Submissions.OrderByDescending(s => s.Version))
+                        {
+                            <div class="sb-timeline-item">
+                                <div class="d-flex justify-content-between flex-wrap gap-2">
+                                    <strong>Version @s.Version</strong>
+                                    <span><span class="badge @UiHelpers.Badge(s.Status)">@s.Status.DisplayName()</span> <span class="small text-muted">submitted @s.SubmittedAt.Local("dd MMM yyyy, h:mm:ss tt")</span></span>
+                                </div>
+                                <p class="pre-wrap mb-1">@s.Description</p>
+                                @if (s.ExternalLink != null) { <div><a href="@s.ExternalLink" target="_blank" rel="noopener noreferrer nofollow"><i class="bi bi-link-45deg"></i> @s.ExternalLink</a></div> }
+                                @if (s.FilePath != null) { <div><a asp-action="SubmissionFile" asp-route-id="@s.Id"><i class="bi bi-paperclip"></i> @s.FileOriginalName</a></div> }
+                                @if (s.EmployerFeedback != null)
+                                {
+                                    <div class="mt-2 p-2 bg-light rounded small"><strong>Employer feedback</strong> (@s.ReviewedAt.Local()): <span class="pre-wrap">@s.EmployerFeedback</span></div>
+                                }
+                                @if (Model.IsEmployer && !a.IsChallengeParticipant && s.Status == SubmissionStatus.PendingReview && s.Id == Model.NextReviewableSubmissionId)
+                                {
+                                    <div class="row g-2 mt-2">
+                                        <div class="col-md-6">
+                                            <form asp-action="Approve" method="post" data-confirm="Approve this work and complete the job? Payment will become due.">
+                                                <input type="hidden" name="SubmissionId" value="@s.Id" /><input type="hidden" name="assignmentId" value="@a.Id" />
+                                                <textarea name="Feedback" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" placeholder="Feedback (optional)"></textarea>
+                                                <button class="btn btn-success btn-sm w-100"><i class="bi bi-check2-circle"></i> Approve completion</button>
+                                            </form>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <form asp-action="RequestRevision" method="post">
+                                                <input type="hidden" name="SubmissionId" value="@s.Id" /><input type="hidden" name="assignmentId" value="@a.Id" />
+                                                <textarea name="Feedback" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" minlength="5" required placeholder="What needs to change? (required)"></textarea>
+                                                <button class="btn btn-outline-warning btn-sm w-100"><i class="bi bi-arrow-repeat"></i> Request revision</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (a.Status == AssignmentStatus.Completed)
+        {
+            <div class="card mb-3">
+                <div class="card-header">Ratings and reviews</div>
+                <div class="card-body">
+                    @if (Model.Ratings.Count == 0) { <p class="text-muted">No ratings yet.</p> }
+                    @foreach (var r in Model.Ratings)
+                    {
+                        <div class="mb-2">
+                            <span class="sb-stars">@for (var i = 1; i <= 5; i++) { <i class="bi @(i <= r.Stars ? "bi-star-fill" : "bi-star")"></i> }</span>
+                            <span class="small text-muted">by @(r.RaterId == a.HunterId ? "the Hunter" : "the Employer") on @r.CreatedAt.Local("dd MMM yyyy")</span>
+                            @if (r.Comment != null) { <div class="pre-wrap small">@r.Comment</div> }
+                        </div>
+                    }
+                    @if (Model.CanRate)
+                    {
+                        <a asp-controller="Ratings" asp-action="Create" asp-route-id="@a.Id" class="btn btn-warning btn-sm"><i class="bi bi-star"></i> Leave a rating</a>
+                    }
+                    else if (Model.MyRating != null)
+                    {
+                        <p class="small text-muted mb-0">You rated this assignment @Model.MyRating.Stars star(s).</p>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3"><div class="card-body small">
+            <dl class="row mb-0">
+                <dt class="col-6">Agreed amount</dt><dd class="col-6">@UiHelpers.Money(a.AgreedAmount, j.Currency)</dd>
+                <dt class="col-6">Assigned</dt><dd class="col-6">@a.AssignedAt.Local()</dd>
+                <dt class="col-6">Accepted</dt><dd class="col-6">@a.AcceptedAt.Local()</dd>
+                <dt class="col-6">Due</dt><dd class="col-6">@a.DueDate.Local() @if (Model.IsLate) { <span class="badge text-bg-danger">Overdue</span> }</dd>
+                <dt class="col-6">Completed</dt><dd class="col-6">@a.CompletedAt.Local()</dd>
+            </dl>
+        </div></div>
+        @if (!string.IsNullOrWhiteSpace(j.SubmissionInstructions))
+        {
+            <div class="card mb-3"><div class="card-header">Submission instructions</div><div class="card-body small pre-wrap">@j.SubmissionInstructions</div></div>
+        }
+        <div class="card mb-3 sb-simulated">
+            <div class="card-header bg-transparent"><i class="bi bi-cash-coin"></i> Payment (simulated ledger)</div>
+            <div class="card-body small">
+                @if (a.Payment == null)
+                {
+                    <p class="mb-0 text-muted">@(a.IsChallengeParticipant ? "A ledger entry is created only for the challenge winner." : "A ledger entry is created when the Hunter accepts the assignment.")</p>
+                }
+                else
+                {
+                    <p class="mb-1">Status: <span class="badge @UiHelpers.Badge(a.Payment.Status)">@a.Payment.Status.DisplayName()</span></p>
+                    <p class="mb-2">Ref: <code>@a.Payment.LedgerReference</code></p>
+                    <a asp-controller="Payments" asp-action="Details" asp-route-id="@a.Payment.Id" class="btn btn-sm btn-outline-dark">Payment details</a>
+                    if (Model.IsEmployer && a.Payment.Status == PaymentStatus.Approved)
+                    {
+                        <a asp-controller="Payments" asp-action="MarkPaid" asp-route-id="@a.Payment.Id" class="btn btn-sm btn-success">Record payment</a>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

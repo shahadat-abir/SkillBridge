@@ -1,0 +1,48 @@
+@model AddSkillModel
+@{ ViewData["Title"] = "My skills"; var mine = (List<UserSkill>)ViewBag.MySkills; }
+<h1 class="h3 mb-1">My skills</h1>
+<p class="text-muted small">Add each skill with your proficiency level for <em>that</em> skill. Levels are self-reported and shown to employers as such. Your performance rating comes only from completed work.</p>
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card"><div class="card-header">Add or update a skill</div><div class="card-body">
+            <form asp-action="AddSkill" method="post">
+                <div class="mb-3">
+                    <label asp-for="SkillId" class="form-label"></label>
+                    <select asp-for="SkillId" asp-items="ViewBag.SkillOptions" class="form-select"><option value="">Choose…</option></select>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Level" class="form-label"></label>
+                    <select asp-for="Level" asp-items="Html.GetEnumSelectList<SkillLevel>()" class="form-select"></select>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="YearsOfExperience" class="form-label"></label>
+                    <input asp-for="YearsOfExperience" class="form-control" min="0" max="50" />
+                </div>
+                <button class="btn btn-primary">Save skill</button>
+            </form>
+        </div></div>
+    </div>
+    <div class="col-lg-7">
+        <div class="card"><div class="card-header">Current skills (@mine.Count)</div>
+            @if (mine.Count == 0)
+            {
+                <div class="card-body text-muted">No skills yet — add your first skill so employers can see your match.</div>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var s in mine)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <span>@s.Skill.Name <span class="badge sb-skill-level">@s.Level</span> <span class="small text-muted">@s.YearsOfExperience yr · self-reported</span></span>
+                            <form asp-action="RemoveSkill" method="post" data-confirm="Remove @s.Skill.Name from your profile?">
+                                <input type="hidden" name="skillId" value="@s.SkillId" />
+                                <button class="btn btn-sm btn-outline-danger" aria-label="Remove @s.Skill.Name"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>

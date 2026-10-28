@@ -1,0 +1,13 @@
+@model (double? Average, int Count)
+@if (Model.Average.HasValue)
+{
+    var full = (int)Math.Round(Model.Average.Value);
+    <span class="sb-stars" title="Performance rating from completed work">
+        @for (var i = 1; i <= 5; i++) { <i class="bi @(i <= full ? "bi-star-fill" : "bi-star")"></i> }
+    </span>
+    <span class="small text-muted">@Model.Average.Value.ToString("0.0") (@Model.Count)</span>
+}
+else
+{
+    <span class="small text-muted">No ratings yet</span>
+}

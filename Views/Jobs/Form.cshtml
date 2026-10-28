@@ -1,0 +1,130 @@
+@model JobFormModel
+@{
+    var isNew = Model.Id == null;
+    ViewData["Title"] = isNew ? "Post a job" : "Edit job";
+}
+<h1 class="h3 mb-3">@ViewData["Title"]</h1>
+<form asp-action="@(isNew ? "Create" : "Edit")" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" novalidate>
+    <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card mb-3"><div class="card-header">Job details</div><div class="card-body">
+                <div class="mb-3">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="7"></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" asp-items="ViewBag.Categories" class="form-select"><option value="">Choose…</option></select>
+                        <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Difficulty" class="form-label"></label>
+                        <select asp-for="Difficulty" asp-items="Html.GetEnumSelectList<JobDifficulty>()" class="form-select"></select>
+                        <div class="form-text">Complexity of the work — not the Hunter's skill level.</div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="EligibilityCriteria" class="form-label"></label>
+                    <textarea asp-for="EligibilityCriteria" class="form-control" rows="3" placeholder="e.g. Final-year CSE student or 1+ year professional experience"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="SubmissionInstructions" class="form-label"></label>
+                    <textarea asp-for="SubmissionInstructions" class="form-control" rows="3" placeholder="What must be delivered and how"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Terms" class="form-label"></label>
+                    <textarea asp-for="Terms" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-1">
+                    <label asp-for="Attachment" class="form-label"></label>
+                    <input asp-for="Attachment" type="file" class="form-control" accept=".pdf,.docx,.xlsx,.pptx,.zip,.png,.jpg,.jpeg,.txt" />
+                    <div class="form-text">Optional. PDF, DOCX, XLSX, PPTX, ZIP, PNG, JPG or TXT, maximum 10 MB.</div>
+                    @if (Model.ExistingAttachmentName != null)
+                    {
+                        <div class="form-check mt-2">
+                            <input asp-for="RemoveAttachment" class="form-check-input" />
+                            <label asp-for="RemoveAttachment" class="form-check-label">Remove current attachment (@Model.ExistingAttachmentName)</label>
+                        </div>
+                    }
+                </div>
+            </div></div>
+
+            <div class="card mb-3">
+                <div class="card-header">Required skills and minimum skill level</div>
+                <div class="card-body">
+                    <span asp-validation-for="RequiredSkills" class="text-danger small d-block mb-2"></span>
+                    <div class="row g-2">
+                        @for (var i = 0; i < Model.RequiredSkills.Count; i++)
+                        {
+                            <div class="col-md-6">
+                                <div class="border rounded p-2 d-flex align-items-center gap-2">
+                                    <input type="hidden" asp-for="RequiredSkills[i].SkillId" />
+                                    <input type="hidden" asp-for="RequiredSkills[i].Name" />
+                                    <div class="form-check flex-grow-1 mb-0">
+                                        <input asp-for="RequiredSkills[i].Selected" class="form-check-input" />
+                                        <label asp-for="RequiredSkills[i].Selected" class="form-check-label">@Model.RequiredSkills[i].Name</label>
+                                    </div>
+                                    <select asp-for="RequiredSkills[i].MinimumLevel" asp-items="Html.GetEnumSelectList<SkillLevel>()" class="form-select form-select-sm w-auto" aria-label="Minimum level for @Model.RequiredSkills[i].Name"></select>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-3"><div class="card-header">Mode, budget and deadlines</div><div class="card-body">
+                <div class="mb-3">
+                    <label asp-for="Mode" class="form-label"></label>
+                    <select asp-for="Mode" asp-items="Html.GetEnumSelectList<JobMode>()" class="form-select"></select>
+                </div>
+                <div class="mb-3" id="participants-group">
+                    <label asp-for="MaxParticipants" class="form-label"></label>
+                    <input asp-for="MaxParticipants" class="form-control" min="2" max="@JobRules.MaxChallengeParticipants" />
+                    <div class="form-text">The same task is given to this many Hunters; the first submission that passes your review wins.</div>
+                    <span asp-validation-for="MaxParticipants" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Budget" class="form-label"></label>
+                    <input asp-for="Budget" class="form-control" min="1" step="1" />
+                    <span asp-validation-for="Budget" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="PaymentType" class="form-label"></label>
+                    <select asp-for="PaymentType" asp-items="Html.GetEnumSelectList<PaymentType>()" class="form-select"></select>
+                    <div class="form-text">Fixed price: applicants must accept the budget. Negotiable: applicants propose their price.</div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ExpectedCompletionDays" class="form-label"></label>
+                    <input asp-for="ExpectedCompletionDays" class="form-control" min="1" max="365" />
+                    <span asp-validation-for="ExpectedCompletionDays" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ApplicationDeadline" class="form-label"></label>
+                    <input asp-for="ApplicationDeadline" type="datetime-local" class="form-control" />
+                    <span asp-validation-for="ApplicationDeadline" class="text-danger small"></span>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="ProjectDeadline" class="form-label"></label>
+                    <input asp-for="ProjectDeadline" type="datetime-local" class="form-control" />
+                    <div class="form-text">The work-delivery deadline — must be after the application deadline.</div>
+                    <span asp-validation-for="ProjectDeadline" class="text-danger small"></span>
+                </div>
+            </div></div>
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary btn-lg">@(isNew ? "Publish job" : "Save changes")</button>
+                <a asp-action="@(isNew ? "Mine" : "Details")" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
+            </div>
+        </div>
+    </div>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

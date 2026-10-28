@@ -1,0 +1,95 @@
+@model ChallengeReviewViewModel
+@{
+    var j = Model.Job;
+    ViewData["Title"] = "Challenge review";
+    var isEmployer = User.IsInRole(AppRoles.Employer);
+}
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a asp-controller="Jobs" asp-action="Details" asp-route-id="@j.Id">@j.Title</a></li>
+    <li class="breadcrumb-item active">Challenge review board</li>
+</ol></nav>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h4 mb-0"><i class="bi bi-trophy text-warning"></i> @j.Title</h1>
+    <div class="small">
+        Participants @Model.Participants.Count/@j.MaxParticipants · reward @UiHelpers.Money(j.Budget, j.Currency) ·
+        <span class="badge @UiHelpers.Badge(j.Status)">@j.Status.DisplayName()</span>
+    </div>
+</div>
+
+@if (j.WinnerAssignmentId != null)
+{
+    var winner = Model.Participants.FirstOrDefault(p => p.Id == j.WinnerAssignmentId);
+    <div class="alert alert-success"><i class="bi bi-trophy-fill"></i> Winner: <strong>@winner?.Hunter.FullName</strong>. The challenge is closed.
+        <a asp-action="Details" asp-route-id="@j.WinnerAssignmentId" class="alert-link">Open winning assignment</a></div>
+}
+else
+{
+    <div class="alert alert-light border small">
+        Submissions are listed in <strong>server-timestamp order</strong>. Only the earliest pending submission can be decided.
+        Approving it makes that participant the winner and closes the challenge; rejecting it (failed review) moves review to the next submission.
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">Participants</div>
+            <ul class="list-group list-group-flush">
+                @if (Model.Participants.Count == 0) { <li class="list-group-item text-muted small">No participants yet.</li> }
+                @foreach (var p in Model.Participants)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><a asp-controller="Profile" asp-action="Details" asp-route-id="@p.HunterId">@p.Hunter.FullName</a><br /><span class="small text-muted">joined @p.AssignedAt.Local("dd MMM, h:mm tt")</span></span>
+                        <span class="badge @UiHelpers.Badge(p.Status)">@(p.IsWinner ? "Winner" : p.Status.DisplayName())</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">Submissions (oldest first)</div>
+            <div class="card-body">
+                @if (Model.Submissions.Count == 0) { <p class="text-muted mb-0">No submissions yet.</p> }
+                @foreach (var s in Model.Submissions)
+                {
+                    var isNext = s.Id == Model.NextReviewableSubmissionId;
+                    <div class="border rounded p-3 mb-3 @(isNext ? "border-primary border-2" : "")">
+                        <div class="d-flex justify-content-between flex-wrap gap-2">
+                            <strong>@s.TaskAssignment.Hunter.FullName — version @s.Version</strong>
+                            <span><span class="badge @UiHelpers.Badge(s.Status)">@s.Status.DisplayName()</span>
+                                <span class="small text-muted">received @s.SubmittedAt.Local("dd MMM yyyy, h:mm:ss tt")</span></span>
+                        </div>
+                        <p class="pre-wrap mb-1 mt-2">@s.Description</p>
+                        @if (s.ExternalLink != null) { <div><a href="@s.ExternalLink" target="_blank" rel="noopener noreferrer nofollow"><i class="bi bi-link-45deg"></i> @s.ExternalLink</a></div> }
+                        @if (s.FilePath != null) { <div><a asp-action="SubmissionFile" asp-route-id="@s.Id"><i class="bi bi-paperclip"></i> @s.FileOriginalName</a></div> }
+                        @if (s.EmployerFeedback != null) { <div class="mt-2 p-2 bg-light rounded small"><strong>Review:</strong> @s.EmployerFeedback</div> }
+                        @if (isNext && isEmployer)
+                        {
+                            <div class="row g-2 mt-2">
+                                <div class="col-md-6">
+                                    <form asp-action="Approve" method="post" data-confirm="Approve this submission? This participant becomes the WINNER and all others are closed. This cannot be undone.">
+                                        <input type="hidden" name="SubmissionId" value="@s.Id" /><input type="hidden" name="assignmentId" value="@s.TaskAssignmentId" /><input type="hidden" name="jobId" value="@j.Id" />
+                                        <textarea name="Feedback" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" placeholder="Feedback (optional)"></textarea>
+                                        <button class="btn btn-success btn-sm w-100"><i class="bi bi-trophy"></i> Passes review — declare winner</button>
+                                    </form>
+                                </div>
+                                <div class="col-md-6">
+                                    <form asp-action="RejectChallengeSubmission" method="post">
+                                        <input type="hidden" name="SubmissionId" value="@s.Id" /><input type="hidden" name="jobId" value="@j.Id" />
+                                        <textarea name="Feedback" class="form-control form-control-sm mb-2" rows="2" maxlength="2000" minlength="5" required placeholder="Why does it fail review? (required)"></textarea>
+                                        <button class="btn btn-outline-danger btn-sm w-100">Fails review</button>
+                                    </form>
+                                </div>
+                            </div>
+                        }
+                        else if (s.Status == SubmissionStatus.PendingReview && j.WinnerAssignmentId == null)
+                        {
+                            <div class="small text-muted mt-2"><i class="bi bi-hourglass"></i> Waiting — an earlier submission must be reviewed first.</div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

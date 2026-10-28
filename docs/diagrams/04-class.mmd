@@ -1,0 +1,57 @@
+classDiagram
+    class JobService {
+      +SearchAsync(JobSearchQuery) PagedResult
+      +CreateAsync(employerId, JobFormModel)
+      +UpdateAsync(employerId, jobId, JobFormModel)
+      +CloseAsync() ReopenAsync() CancelAsync()
+      +ReportAsync(userId, jobId, reason)
+    }
+    class ApplicationService {
+      +ApplyAsync(hunterId, ApplyFormModel)
+      +WithdrawAsync(hunterId, id)
+      +ChangeStatusAsync(employerId, id, status)
+      +SelectAsync(employerId, applicationId)
+      +CompareAsync(employerId, jobId, sort)
+    }
+    class AssignmentService {
+      +AcceptAsync() DeclineAsync()
+      +JoinChallengeAsync(hunterId, jobId, acceptedTerms)
+      +SubmitAsync(hunterId, SubmitWorkModel)
+      +ApproveAsync(employerId, submissionId)
+      +RequestRevisionAsync(employerId, submissionId, reason)
+      +RejectChallengeSubmissionAsync(employerId, submissionId, reason)
+    }
+    class PaymentService {
+      +CreateFor(assignment, job, status)
+      +Transition(payment, to, actor, note) bool
+      +MarkPaidAsync() MarkFailedAsync() RetryAsync() RefundAsync()
+    }
+    class RatingService {
+      +CheckEligibility(assignment, userId, existing)$
+      +CreateAsync(userId, assignmentId, stars, comment)
+    }
+    class ReputationService { +ForUsersAsync(ids) }
+    class NotificationService { +Add(...) +ListAsync() +MarkReadAsync() }
+    class AuditService { +Add(userId, action, entity, id, details) }
+    class FileStorageService { +SaveAsync(file, folder) +Open(path) +SignatureMatches(ext, bytes)$ }
+    class JobRules { <<static>> +IsAcceptingApplications() +Validate() +CanEdit() }
+    class ApplicationRules { <<static>> +CanTransition() +IsActive() }
+    class PaymentRules { <<static>> +CanTransition() }
+    class ChallengeRules { <<static>> +NextReviewableSubmissionId() +CanJoin() }
+    class SkillMatcher { <<static>> +Match(required, hunterSkills) SkillMatchResult }
+    JobService --> PaymentService
+    JobService --> FileStorageService
+    ApplicationService --> ReputationService
+    ApplicationService --> SkillMatcher
+    ApplicationService --> ApplicationRules
+    AssignmentService --> PaymentService
+    AssignmentService --> ChallengeRules
+    PaymentService --> PaymentRules
+    JobService --> JobRules
+    ApplicationService --> NotificationService
+    AssignmentService --> NotificationService
+    PaymentService --> NotificationService
+    RatingService --> NotificationService
+    ApplicationService --> AuditService
+    AssignmentService --> AuditService
+    PaymentService --> AuditService

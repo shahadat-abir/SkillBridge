@@ -1,0 +1,23 @@
+@model PagedResult<AuditLog>
+@{ ViewData["Title"] = "Audit log"; var names = (Dictionary<string, string>)ViewBag.Names; }
+<h1 class="h3 mb-3">Audit log</h1>
+<partial name="_Nav" />
+<div class="card"><div class="table-responsive">
+    <table class="table table-sm mb-0 small">
+        <thead><tr><th>#</th><th>When</th><th>User</th><th>Action</th><th>Entity</th><th>Details</th></tr></thead>
+        <tbody>
+        @foreach (var a in Model.Items)
+        {
+            <tr>
+                <td>@a.Id</td>
+                <td class="text-nowrap">@a.CreatedAt.Local("dd MMM yyyy, h:mm:ss tt")</td>
+                <td>@(a.UserId != null && names.TryGetValue(a.UserId, out var n) ? n : "—")</td>
+                <td>@a.Action</td>
+                <td>@a.EntityType #@a.EntityId</td>
+                <td>@a.Details</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div></div>
+<div class="mt-3"><partial name="_Pager" model="@(new PagerModel { Page = Model.Page, TotalPages = Model.TotalPages, Action = "Audit", Controller = "Admin" })" /></div>

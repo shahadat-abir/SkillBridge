@@ -1,0 +1,56 @@
+@model ApplyFormModel
+@{ ViewData["Title"] = "Apply"; var isFixed = Model.PaymentType == PaymentType.FixedPrice; }
+<nav aria-label="breadcrumb"><ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a asp-controller="Jobs" asp-action="Details" asp-route-id="@Model.JobId">@Model.JobTitle</a></li>
+    <li class="breadcrumb-item active">Apply</li>
+</ol></nav>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card"><div class="card-body p-4">
+            <h1 class="h4">Apply to “@Model.JobTitle”</h1>
+            <p class="text-muted small">Budget: @UiHelpers.Money(Model.JobBudget) (@Model.PaymentType.DisplayName()) · expected @Model.JobExpectedDays day(s)</p>
+            <form asp-action="Apply" asp-route-id="@Model.JobId" method="post" enctype="multipart/form-data" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                <div class="mb-3">
+                    <label asp-for="CoverLetter" class="form-label"></label>
+                    <textarea asp-for="CoverLetter" class="form-control" rows="7" placeholder="Explain how you will approach the work and why you are a good fit."></textarea>
+                    <span asp-validation-for="CoverLetter" class="text-danger small"></span>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ProposedAmount" class="form-label"></label>
+                        @if (isFixed)
+                        {
+                            <input type="hidden" asp-for="ProposedAmount" />
+                            <input class="form-control" value="@Model.JobBudget.ToString("N2")" disabled aria-label="Fixed price" />
+                            <div class="form-text">Fixed-price job: the price equals the budget.</div>
+                        }
+                        else
+                        {
+                            <input asp-for="ProposedAmount" class="form-control" min="1" step="1" />
+                        }
+                        <span asp-validation-for="ProposedAmount" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ProposedDays" class="form-label"></label>
+                        <input asp-for="ProposedDays" class="form-control" min="1" max="365" />
+                        <span asp-validation-for="ProposedDays" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="RelevantExperience" class="form-label"></label>
+                    <textarea asp-for="RelevantExperience" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Attachment" class="form-label"></label>
+                    <input asp-for="Attachment" type="file" class="form-control" accept=".pdf,.docx,.zip,.png,.jpg,.jpeg,.txt" />
+                    <div class="form-text">Optional CV or sample, max 10 MB.</div>
+                </div>
+                <p class="small text-muted">Your profile skills and ratings will be shown to the employer together with this application.</p>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Submit application</button>
+                <a asp-controller="Jobs" asp-action="Details" asp-route-id="@Model.JobId" class="btn btn-link">Cancel</a>
+            </form>
+        </div></div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor P1 as Participant 1
+    actor P2 as Participant 2
+    actor E as Employer
+    participant AsS as AssignmentService
+    participant DB as SQL Server
+    P1->>AsS: JoinChallengeAsync(acceptedTerms=true)
+    AsS->>DB: count < MaxParticipants? INSERT assignment, update job ConcurrencyStamp
+    P2->>AsS: JoinChallengeAsync(acceptedTerms=true)
+    P2->>AsS: SubmitAsync → SubmittedAt = t1
+    P1->>AsS: SubmitAsync → SubmittedAt = t2 (t2 > t1)
+    E->>AsS: ApproveAsync(P1 submission)
+    AsS-->>E: refused — earliest pending submission must be reviewed first
+    E->>AsS: RejectChallengeSubmissionAsync(P2 submission, reason)
+    AsS->>DB: P2 submission=Rejected, P2 may resubmit before deadline
+    E->>AsS: ApproveAsync(P1 submission)
+    AsS->>DB: BEGIN TRANSACTION
+    AsS->>DB: check WinnerAssignmentId IS NULL, set winner, IsWinner=1 (unique filtered index)
+    AsS->>DB: other participants=ChallengeLost, pending submissions=Closed
+    AsS->>DB: INSERT Payment(winner, Approved)
+    AsS->>DB: COMMIT (concurrency stamp prevents a second winner)

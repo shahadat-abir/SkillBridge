@@ -1,0 +1,97 @@
+@model ProfileViewModel
+@{ var u = Model.User; ViewData["Title"] = u.FullName; }
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card mb-3"><div class="card-body text-center">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2" style="width:5rem;height:5rem;font-size:2rem;">@(u.FullName.Length > 0 ? u.FullName[0].ToString().ToUpper() : "?")</div>
+            <h1 class="h4 mb-0">@u.FullName</h1>
+            @if (u.CompanyName != null) { <div class="text-muted">@u.CompanyName</div> }
+            @if (u.Headline != null) { <div class="mt-1">@u.Headline</div> }
+            <div class="mt-2">
+                @if (Model.IsHunter) { <span class="badge text-bg-primary">Hunter</span> }
+                @if (Model.IsEmployer) { <span class="badge text-bg-dark">Employer</span> }
+                @if (u.IsDemoAccount) { <span class="badge text-bg-secondary">Demo account</span> }
+                @if (u.IsSuspended) { <span class="badge text-bg-danger">Suspended</span> }
+            </div>
+            <div class="mt-2"><partial name="_Stars" model="(Model.AverageRating, Model.RatingCount)" /></div>
+            @if (Model.IsOwnProfile)
+            {
+                <a asp-action="Edit" class="btn btn-sm btn-outline-primary mt-3">Edit profile</a>
+                if (Model.IsHunter)
+                {
+                    <a asp-action="Skills" class="btn btn-sm btn-outline-primary mt-3">Manage skills</a>
+                }
+            }
+        </div></div>
+        <div class="card mb-3"><div class="card-body small">
+            <dl class="row mb-0">
+                @if (u.Location != null) { <dt class="col-5">Location</dt><dd class="col-7">@u.Location</dd> }
+                @if (Model.IsHunter && u.Availability != null) { <dt class="col-5">Availability</dt><dd class="col-7">@u.Availability</dd> }
+                <dt class="col-5">Member since</dt><dd class="col-7">@u.CreatedAt.Local("MMM yyyy")</dd>
+                @if (Model.CanSeePrivate) { <dt class="col-5">Email <i class="bi bi-lock" title="Visible only to you and administrators"></i></dt><dd class="col-7 text-break">@u.Email</dd> }
+                @if (Model.IsHunter)
+                {
+                    <dt class="col-5">Completed jobs</dt><dd class="col-7">@Model.CompletedJobs</dd>
+                    <dt class="col-5">Applications</dt><dd class="col-7">@Model.TotalApplications</dd>
+                }
+                @if (Model.IsEmployer) { <dt class="col-5">Jobs posted</dt><dd class="col-7">@Model.JobsPosted</dd> }
+            </dl>
+        </div></div>
+    </div>
+    <div class="col-lg-8">
+        @if (u.Bio != null)
+        {
+            <div class="card mb-3"><div class="card-header">About</div><div class="card-body pre-wrap">@u.Bio</div></div>
+        }
+        @if (Model.IsHunter)
+        {
+            <div class="card mb-3">
+                <div class="card-header d-flex justify-content-between">Skills <span class="small text-muted fw-normal">Self-reported — not verified by SkillBridge</span></div>
+                <div class="card-body">
+                    @if (Model.Skills.Count == 0) { <p class="text-muted mb-0">No skills added yet.</p> }
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var s in Model.Skills)
+                        {
+                            <span class="border rounded px-2 py-1">@s.Skill.Name <span class="badge sb-skill-level">@s.Level</span> <span class="small text-muted">@s.YearsOfExperience yr</span></span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6"><div class="card h-100"><div class="card-header">Education</div><div class="card-body pre-wrap small">@(u.Education ?? "—")</div></div></div>
+                <div class="col-md-6"><div class="card h-100"><div class="card-header">Experience</div><div class="card-body pre-wrap small">@(u.Experience ?? "—")</div></div></div>
+            </div>
+            @if (u.PortfolioUrl != null)
+            {
+                <p><a href="@u.PortfolioUrl" target="_blank" rel="noopener noreferrer nofollow" class="btn btn-outline-secondary btn-sm"><i class="bi bi-folder2-open"></i> Portfolio</a></p>
+            }
+            <div class="card mb-3">
+                <div class="card-header">Completed work on SkillBridge</div>
+                <ul class="list-group list-group-flush">
+                    @if (Model.CompletedWork.Count == 0) { <li class="list-group-item text-muted small">No completed work yet.</li> }
+                    @foreach (var w in Model.CompletedWork)
+                    {
+                        <li class="list-group-item d-flex justify-content-between small">
+                            <span>@w.Job.Title <span class="text-muted">· @w.Job.Category.Name</span> @if (w.IsWinner) { <span class="badge text-bg-warning">Challenge winner</span> }</span>
+                            <span class="text-muted">@w.CompletedAt.Local("dd MMM yyyy")</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+        <div class="card">
+            <div class="card-header">Ratings and reviews received</div>
+            <div class="card-body">
+                @if (Model.Reviews.Count == 0) { <p class="text-muted mb-0">No reviews yet. Reviews can only be left after completed work.</p> }
+                @foreach (var r in Model.Reviews)
+                {
+                    <div class="border-bottom pb-2 mb-2">
+                        <span class="sb-stars">@for (var i = 1; i <= 5; i++) { <i class="bi @(i <= r.Stars ? "bi-star-fill" : "bi-star")"></i> }</span>
+                        <span class="small text-muted">@r.Rater.FullName · @r.TaskAssignment.Job.Title · @r.CreatedAt.Local("dd MMM yyyy")</span>
+                        @if (r.Comment != null) { <div class="small pre-wrap">@r.Comment</div> }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

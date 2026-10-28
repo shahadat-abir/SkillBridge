@@ -1,0 +1,103 @@
+erDiagram
+    AspNetUsers ||--o{ UserSkills : has
+    Skills ||--o{ UserSkills : "rated at level"
+    AspNetUsers ||--o{ Jobs : posts
+    JobCategories ||--o{ Jobs : classifies
+    Jobs ||--o{ JobSkills : requires
+    Skills ||--o{ JobSkills : "required at min level"
+    Jobs ||--o{ JobApplications : receives
+    AspNetUsers ||--o{ JobApplications : submits
+    Jobs ||--o{ TaskAssignments : "assigned via"
+    AspNetUsers ||--o{ TaskAssignments : works
+    JobApplications |o--o| TaskAssignments : "selected as"
+    TaskAssignments ||--o{ WorkSubmissions : versions
+    TaskAssignments ||--o{ Ratings : "reviewed in"
+    AspNetUsers ||--o{ Ratings : "gives / receives"
+    TaskAssignments ||--o| Payments : "ledger entry"
+    Payments ||--o{ PaymentEvents : history
+    AspNetUsers ||--o{ Notifications : receives
+    Jobs ||--o{ ContentReports : "reported in"
+    AspNetUsers ||--o{ AuditLogs : performs
+
+    AspNetUsers { string Id PK
+        string FullName
+        string Headline
+        string Education
+        string Experience
+        string PortfolioUrl
+        string CompanyName
+        bool IsSuspended
+        bool IsDemoAccount }
+    Skills { int Id PK
+        string Name UK
+        bool IsActive }
+    UserSkills { string UserId PK
+        int SkillId PK
+        int Level "SkillLevel 1-4"
+        int YearsOfExperience }
+    JobCategories { int Id PK
+        string Name UK
+        bool IsActive }
+    Jobs { int Id PK
+        string Title
+        int CategoryId FK
+        int Difficulty "1-3 stars"
+        int Mode "Standard/Challenge"
+        decimal Budget "decimal(18,2)"
+        int PaymentType
+        datetime ApplicationDeadline
+        datetime ProjectDeadline
+        int MaxParticipants
+        int Status
+        string EmployerId FK
+        int WinnerAssignmentId
+        guid ConcurrencyStamp }
+    JobSkills { int JobId PK
+        int SkillId PK
+        int MinimumLevel }
+    JobApplications { int Id PK
+        int JobId FK
+        string HunterId FK
+        decimal ProposedAmount
+        int ProposedDays
+        int Status }
+    TaskAssignments { int Id PK
+        int JobId FK
+        string HunterId FK
+        int ApplicationId FK
+        bool IsChallengeParticipant
+        bool IsWinner
+        decimal AgreedAmount
+        int Status }
+    WorkSubmissions { int Id PK
+        int TaskAssignmentId FK
+        int Version
+        datetime SubmittedAt
+        int Status
+        string EmployerFeedback }
+    Ratings { int Id PK
+        int TaskAssignmentId FK
+        string RaterId FK
+        string RateeId FK
+        int Stars "1-5 check" }
+    Payments { int Id PK
+        int TaskAssignmentId FK
+        decimal Amount
+        int Status
+        string LedgerReference UK }
+    PaymentEvents { int Id PK
+        int PaymentId FK
+        int FromStatus
+        int ToStatus }
+    Notifications { int Id PK
+        string UserId FK
+        int Type
+        bool IsRead }
+    AuditLogs { long Id PK
+        string Action
+        string EntityType
+        string EntityId }
+    ContentReports { int Id PK
+        int JobId FK
+        string ReporterId FK
+        int Status }

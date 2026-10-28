@@ -1,0 +1,42 @@
+@model List<Job>
+@{ ViewData["Title"] = "My jobs"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">My jobs</h1>
+    <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg"></i> Post a job</a>
+</div>
+@if (Model.Count == 0)
+{
+    <div class="card"><div class="card-body text-center text-muted py-5">You have not posted any jobs yet.</div></div>
+}
+else
+{
+    <div class="card"><div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead><tr><th>Job</th><th>Mode</th><th>Difficulty</th><th>Budget</th><th>Apply by</th><th>Applicants / participants</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var j in Model)
+            {
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@j.Id">@j.Title</a><div class="small text-muted">@j.Category.Name</div></td>
+                    <td>@(j.Mode == JobMode.Challenge ? "Challenge" : "Standard")</td>
+                    <td><span class="badge sb-difficulty">@j.Difficulty.StarsText()</span></td>
+                    <td>@UiHelpers.Money(j.Budget, j.Currency)</td>
+                    <td class="small">@j.ApplicationDeadline.Local("dd MMM yyyy")</td>
+                    <td>@(j.Mode == JobMode.Challenge ? $"{j.Assignments.Count}/{j.MaxParticipants}" : j.Applications.Count(a => a.Status != ApplicationStatus.Withdrawn).ToString())</td>
+                    <td><span class="badge @UiHelpers.Badge(j.Status)">@j.Status.DisplayName()</span></td>
+                    <td class="text-end text-nowrap">
+                        @if (j.Mode == JobMode.Standard)
+                        {
+                            <a asp-controller="Applications" asp-action="Compare" asp-route-id="@j.Id" class="btn btn-sm btn-outline-primary">Compare</a>
+                        }
+                        else
+                        {
+                            <a asp-controller="Assignments" asp-action="Challenge" asp-route-id="@j.Id" class="btn btn-sm btn-outline-primary">Review</a>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div></div>
+}

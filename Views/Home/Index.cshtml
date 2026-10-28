@@ -1,0 +1,84 @@
+@model List<JobListItemViewModel>
+@{
+    ViewData["Title"] = "Home";
+    var categories = (List<JobCategory>)ViewBag.Categories;
+}
+<section class="sb-hero p-4 p-md-5 mb-4">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-7">
+            <h1 class="display-5 fw-bold">Connect Skills. Discover Opportunities. Deliver Results.</h1>
+            <p class="lead opacity-75">
+                SkillBridge lets Employers post jobs and tasks with budgets, required skills and difficulty,
+                compare applicants on real evidence, select the right Hunter, review delivered work and track payment.
+            </p>
+            <form asp-controller="Jobs" asp-action="Index" method="get" class="d-flex gap-2 mt-3" role="search">
+                <label for="Keyword" class="visually-hidden">Search jobs</label>
+                <input id="Keyword" name="Keyword" class="form-control form-control-lg" placeholder="Search jobs, e.g. ASP.NET, logo, data analysis" />
+                <button class="btn btn-warning btn-lg fw-semibold" type="submit"><i class="bi bi-search"></i></button>
+            </form>
+        </div>
+        <div class="col-lg-5">
+            <div class="row g-3 text-center">
+                <div class="col-6"><div class="bg-white bg-opacity-10 rounded-3 p-3"><div class="fs-2 fw-bold">@ViewBag.OpenJobs</div><div class="small text-uppercase opacity-75">Open jobs</div></div></div>
+                <div class="col-6"><div class="bg-white bg-opacity-10 rounded-3 p-3"><div class="fs-2 fw-bold">@ViewBag.CompletedJobs</div><div class="small text-uppercase opacity-75">Completed jobs</div></div></div>
+            </div>
+            @if (User.Identity?.IsAuthenticated != true)
+            {
+                <div class="d-flex gap-2 justify-content-center mt-3">
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-light">I want to hire</a>
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-outline-light">I want to work</a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+            <h5><i class="bi bi-briefcase text-sb"></i> For Employers</h5>
+            <p class="text-muted mb-0">Post jobs with budget, qualifications, required skills and a 1–3 star difficulty. Compare applicants side by side and select the best Hunter.</p>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+            <h5><i class="bi bi-person-badge text-sb"></i> For Hunters</h5>
+            <p class="text-muted mb-0">Show skills with skill-specific levels, apply with a proposal, submit work, respond to revisions and build a rating from completed work.</p>
+        </div></div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100"><div class="card-body">
+            <h5><i class="bi bi-trophy text-sb"></i> Challenge mode</h5>
+            <p class="text-muted mb-0">Several Hunters attempt the same task; the first submission that passes the Employer's review wins the reward.</p>
+        </div></div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h2 class="h4 mb-0">Latest open jobs</h2>
+    <a asp-controller="Jobs" asp-action="Index" class="btn btn-sm btn-outline-primary">Browse all</a>
+</div>
+@if (Model.Count == 0)
+{
+    <div class="card"><div class="card-body text-muted">No open jobs yet. Employers can post the first one after signing up.</div></div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var j in Model)
+        {
+            <div class="col-md-4"><partial name="~/Views/Jobs/_JobCard.cshtml" model="j" /></div>
+        }
+    </div>
+}
+
+@if (categories.Count > 0)
+{
+    <h2 class="h5 mt-4">Categories</h2>
+    <div class="d-flex flex-wrap gap-2">
+        @foreach (var c in categories)
+        {
+            <a class="btn btn-sm btn-outline-secondary" asp-controller="Jobs" asp-action="Index" asp-route-CategoryId="@c.Id">@c.Name</a>
+        }
+    </div>
+}

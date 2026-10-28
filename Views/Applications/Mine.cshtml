@@ -1,0 +1,42 @@
+@model List<JobApplication>
+@{ ViewData["Title"] = "My applications"; }
+<h1 class="h3 mb-3">My applications</h1>
+@if (Model.Count == 0)
+{
+    <div class="card"><div class="card-body text-center text-muted py-5">You have not applied to any job yet. <a asp-controller="Jobs" asp-action="Index">Browse jobs</a></div></div>
+}
+else
+{
+    <div class="card"><div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Job</th><th>Proposed</th><th>Time</th><th>Applied</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var a in Model)
+            {
+                <tr>
+                    <td><a asp-controller="Jobs" asp-action="Details" asp-route-id="@a.JobId">@a.Job.Title</a><div class="small text-muted">@a.Job.Category.Name · job @a.Job.Status.DisplayName().ToLowerInvariant()</div></td>
+                    <td>@UiHelpers.Money(a.ProposedAmount, a.Job.Currency)</td>
+                    <td>@a.ProposedDays d</td>
+                    <td class="small">@a.AppliedAt.Local("dd MMM yyyy")</td>
+                    <td>
+                        <span class="badge @UiHelpers.Badge(a.Status)">@a.Status.DisplayName()</span>
+                        @if (!string.IsNullOrWhiteSpace(a.EmployerNote)) { <div class="small text-muted">Note: @a.EmployerNote</div> }
+                    </td>
+                    <td class="text-end">
+                        @if (ApplicationRules.IsActive(a.Status))
+                        {
+                            <form asp-action="Withdraw" asp-route-id="@a.Id" method="post" data-confirm="Withdraw this application? You cannot apply to this job again.">
+                                <button class="btn btn-sm btn-outline-danger">Withdraw</button>
+                            </form>
+                        }
+                        else if (a.Status == ApplicationStatus.Accepted)
+                        {
+                            <a asp-controller="Assignments" asp-action="Index" class="btn btn-sm btn-success">Open assignment</a>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div></div>
+}

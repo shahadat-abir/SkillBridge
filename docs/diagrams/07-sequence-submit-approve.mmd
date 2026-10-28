@@ -1,0 +1,26 @@
+sequenceDiagram
+    actor H as Hunter
+    actor E as Employer
+    participant AsC as AssignmentsController
+    participant AsS as AssignmentService
+    participant PS as PaymentService
+    participant DB as SQL Server
+    H->>AsC: POST /Assignments/Accept/{id}
+    AsC->>AsS: AcceptAsync
+    AsS->>DB: assignment=InProgress, job=InProgress, other applications=Rejected
+    AsS->>PS: CreateFor(assignment) → Pending + PaymentEvent
+    H->>AsC: POST /Assignments/Submit/{id} (description, link/file)
+    AsC->>AsS: SubmitAsync
+    AsS->>DB: INSERT WorkSubmission vN (server timestamp), assignment=Submitted
+    AsS->>PS: Transition → AwaitingApproval
+    alt changes needed
+        E->>AsC: POST RequestRevision (reason)
+        AsS->>DB: submission=RevisionRequested, assignment=RevisionRequested
+        AsS->>PS: Transition → Pending
+    else accepted
+        E->>AsC: POST Approve
+        AsS->>DB: submission=Approved, assignment=Completed, job=Completed
+        AsS->>PS: Transition → Approved
+        E->>AsC: POST /Payments/MarkPaid (method, reference)
+        PS->>DB: payment=Paid (simulated) + PaymentEvent
+    end

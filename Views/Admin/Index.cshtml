@@ -1,0 +1,28 @@
+@model AdminDashboardViewModel
+@{ ViewData["Title"] = "Admin"; }
+<h1 class="h3 mb-3"><i class="bi bi-shield-lock"></i> Administration</h1>
+<partial name="_Nav" />
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><partial name="~/Views/Dashboard/_Stat.cshtml" model='("Users", Model.TotalUsers.ToString(), "bi-people")' /></div>
+    <div class="col-6 col-md-3"><partial name="~/Views/Dashboard/_Stat.cshtml" model='("Employers / Hunters", $"{Model.Employers} / {Model.Hunters}", "bi-person-badge")' /></div>
+    <div class="col-6 col-md-3"><partial name="~/Views/Dashboard/_Stat.cshtml" model='("Suspended", Model.SuspendedUsers.ToString(), "bi-person-slash")' /></div>
+    <div class="col-6 col-md-3"><partial name="~/Views/Dashboard/_Stat.cshtml" model='("Open reports", Model.OpenReports.ToString(), "bi-flag")' /></div>
+    <div class="col-6 col-md-3"><partial name="~/Views/Dashboard/_Stat.cshtml" model='("Jobs (open / total)", $"{Model.OpenJobs} / {Model.TotalJobs}", "bi-briefcase")' /></div>
+    <div class="col-6 col-md-3"><partial name="~/Views/Dashboard/_Stat.cshtml" model='("Completed jobs", Model.CompletedJobs.ToString(), "bi-check2-all")' /></div>
+    <div class="col-6 col-md-3"><partial name="~/Views/Dashboard/_Stat.cshtml" model='("Applications", Model.TotalApplications.ToString(), "bi-send")' /></div>
+    <div class="col-6 col-md-3"><partial name="~/Views/Dashboard/_Stat.cshtml" model='("Ledger paid / due", $"{Model.LedgerPaid:N0} / {Model.LedgerDue:N0}", "bi-cash-coin")' /></div>
+</div>
+<div class="card">
+    <div class="card-header d-flex justify-content-between">Recent activity <a asp-action="Audit" class="small">Full audit log</a></div>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0 small">
+            <thead><tr><th>When</th><th>Action</th><th>Entity</th><th>Details</th></tr></thead>
+            <tbody>
+            @foreach (var a in Model.RecentAudit)
+            {
+                <tr><td class="text-nowrap">@a.CreatedAt.Local("dd MMM, h:mm tt")</td><td>@a.Action</td><td>@a.EntityType #@a.EntityId</td><td>@a.Details</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

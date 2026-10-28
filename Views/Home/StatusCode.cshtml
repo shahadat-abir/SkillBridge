@@ -1,0 +1,17 @@
+@{
+    var code = (int)(ViewBag.Code ?? 0);
+    ViewData["Title"] = code == 404 ? "Not found" : code == 403 ? "Forbidden" : "Error " + code;
+}
+<div class="text-center py-5">
+    <h1 class="display-4 fw-bold text-sb">@code</h1>
+    <p class="lead">
+        @(code switch
+        {
+            404 => "The page or record you are looking for does not exist.",
+            403 => "You do not have permission to access this resource.",
+            429 => "Too many requests. Please wait a minute and try again.",
+            _ => "The request could not be completed."
+        })
+    </p>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Home</a>
+</div>

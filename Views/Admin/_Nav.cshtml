@@ -1,0 +1,10 @@
+@{ var action = ViewContext.RouteData.Values["action"]?.ToString(); string A(string a) => a == action ? "active" : ""; }
+<ul class="nav nav-pills mb-3 flex-wrap">
+    <li class="nav-item"><a class="nav-link @A("Index")" asp-action="Index">Overview</a></li>
+    <li class="nav-item"><a class="nav-link @A("Users")" asp-action="Users">Users</a></li>
+    <li class="nav-item"><a class="nav-link @A("Jobs")" asp-action="Jobs">Jobs</a></li>
+    <li class="nav-item"><a class="nav-link @A("Categories")" asp-action="Categories">Categories &amp; skills</a></li>
+    <li class="nav-item"><a class="nav-link @A("Reports")" asp-action="Reports">Reports</a></li>
+    <li class="nav-item"><a class="nav-link" asp-controller="Payments" asp-action="Index">Payment ledger</a></li>
+    <li class="nav-item"><a class="nav-link @A("Audit")" asp-action="Audit">Audit log</a></li>
+</ul>

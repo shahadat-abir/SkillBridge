@@ -1,0 +1,59 @@
+:root {
+    --sb-primary: #0f5c8c;
+    --sb-primary-dark: #0b3f61;
+    --sb-accent: #f2a541;
+    --sb-bg: #f5f7fa;
+}
+
+html { font-size: 15px; }
+@media (min-width: 768px) { html { font-size: 16px; } }
+
+body { background: var(--sb-bg); color: #1f2933; }
+
+.sb-navbar { background: linear-gradient(90deg, var(--sb-primary-dark), var(--sb-primary)); }
+.sb-logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2rem; height: 2rem; border-radius: .5rem; background: var(--sb-accent); color: #fff;
+}
+.sb-footer { background: #10273a; color: #c6d3de; }
+
+.btn-primary { background-color: var(--sb-primary); border-color: var(--sb-primary); }
+.btn-primary:hover, .btn-primary:focus { background-color: var(--sb-primary-dark); border-color: var(--sb-primary-dark); }
+.text-sb { color: var(--sb-primary); }
+
+.sb-hero {
+    background: radial-gradient(circle at top right, rgba(242,165,65,.25), transparent 40%),
+                linear-gradient(135deg, var(--sb-primary-dark), var(--sb-primary));
+    color: #fff; border-radius: 1rem;
+}
+
+.card { border: 0; border-radius: .85rem; box-shadow: 0 1px 3px rgba(16,39,58,.08), 0 4px 16px rgba(16,39,58,.04); }
+.card-header { background: #fff; border-bottom: 1px solid #edf0f3; font-weight: 600; }
+
+.sb-stat { font-size: 1.9rem; font-weight: 700; color: var(--sb-primary); line-height: 1.1; }
+.sb-stat-label { font-size: .85rem; color: #6b7785; text-transform: uppercase; letter-spacing: .03em; }
+
+.sb-stars { color: #f5b301; white-space: nowrap; }
+.sb-difficulty { background: #fff4e0; color: #8a5300; border: 1px solid #f2d39b; }
+.sb-skill-level { background: #e6f2fa; color: var(--sb-primary-dark); border: 1px solid #bcdcf0; }
+
+.sb-match-meets { color: #198754; }
+.sb-match-below { color: #b8860b; }
+.sb-match-missing { color: #dc3545; }
+
+.table-compare th { white-space: nowrap; background: #f0f4f8; position: sticky; left: 0; z-index: 1; }
+.table-compare td { min-width: 200px; vertical-align: top; }
+
+.sb-job-card { transition: transform .1s ease, box-shadow .1s ease; }
+.sb-job-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(16,39,58,.10); }
+
+.sb-timeline { border-left: 3px solid #d7e2ec; padding-left: 1rem; }
+.sb-timeline-item { position: relative; margin-bottom: 1rem; }
+.sb-timeline-item::before {
+    content: ""; position: absolute; left: -1.45rem; top: .35rem; width: .8rem; height: .8rem;
+    border-radius: 50%; background: var(--sb-primary);
+}
+
+.sb-simulated { background: repeating-linear-gradient(45deg, #fff8e6, #fff8e6 10px, #fff2cc 10px, #fff2cc 20px); }
+
+.pre-wrap { white-space: pre-wrap; }

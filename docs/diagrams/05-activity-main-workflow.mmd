@@ -1,0 +1,21 @@
+flowchart TD
+    A([Employer posts job]) --> B{Mode?}
+    B -- Standard --> C[Hunters apply / bid before application deadline]
+    C --> D[Employer compares applicants]
+    D --> E[Employer selects one Hunter]
+    E --> F{Hunter accepts?}
+    F -- Declines --> C
+    F -- Accepts --> G[Other applicants rejected · payment ledger Pending]
+    G --> H[Hunter submits work vN]
+    H --> I{Employer review}
+    I -- Revision requested --> H
+    I -- Approved --> J[Job Completed · payment Approved]
+    J --> K[Employer records simulated payment → Paid]
+    K --> L[Both parties may rate once]
+    B -- Challenge --> M[Up to N Hunters join after accepting rules]
+    M --> N[Participants submit; server timestamps]
+    N --> O{Earliest pending submission passes review?}
+    O -- No: rejected --> P[Next earliest becomes reviewable; rejected participant may resubmit before deadline]
+    P --> O
+    O -- Yes --> Q[Winner recorded once · others closed · winner payment Approved]
+    Q --> K

@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>SkillBridge</RootNamespace>
+    <AssemblyName>SkillBridge</AssemblyName>
+    <Product>SkillBridge</Product>
+    <Description>SkillBridge — skill-based job and task marketplace</Description>
+    <UserSecretsId>skillbridge-6f2c1a4e-dev</UserSecretsId>
+    <!-- Tests, docs and runtime data live inside this folder; keep them out of the web project -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**;docs/**;App_Data/**;TestResults/**</DefaultItemExcludes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <!-- Pins a patched version of a vulnerable transitive dependency (NU1902/NU1903: CVE-2026-70162, CVE-2026-84008; fixed in 10.0.13) -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SkillBridge.Tests" />
+  </ItemGroup>
+
+</Project>

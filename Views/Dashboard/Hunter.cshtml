@@ -1,0 +1,58 @@
+@model HunterDashboardViewModel
+@{ ViewData["Title"] = "Hunter dashboard"; }
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Hunter dashboard</h1>
+    <a asp-controller="Jobs" asp-action="Index" class="btn btn-primary"><i class="bi bi-search"></i> Find jobs</a>
+</div>
+@if (Model.SkillCount == 0)
+{
+    <div class="alert alert-warning"><i class="bi bi-lightbulb"></i> Add your skills so employers can see how you match their requirements. <a asp-controller="Profile" asp-action="Skills" class="alert-link">Add skills</a></div>
+}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Applications", Model.TotalApplications.ToString(), "bi-send")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Pending", Model.PendingApplications.ToString(), "bi-hourglass-split")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Accepted", Model.AcceptedApplications.ToString(), "bi-check2-circle")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Awaiting my acceptance", Model.AwaitingMyAcceptance.ToString(), "bi-inbox")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Active assignments", Model.ActiveAssignments.ToString(), "bi-tools")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Awaiting review", Model.AwaitingReview.ToString(), "bi-eye")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Completed work", Model.CompletedWork.ToString(), "bi-trophy")' /></div>
+    <div class="col-6 col-md-3"><partial name="_Stat" model='("Rating", Model.AverageRating.HasValue ? $"{Model.AverageRating:0.0} ({Model.RatingCount})" : "—", "bi-star")' /></div>
+</div>
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">Current work <a asp-controller="Assignments" asp-action="Index" class="small">All</a></div>
+            <ul class="list-group list-group-flush">
+                @if (Model.CurrentAssignments.Count == 0) { <li class="list-group-item text-muted small">No active assignments.</li> }
+                @foreach (var a in Model.CurrentAssignments)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><a asp-controller="Assignments" asp-action="Details" asp-route-id="@a.Id">@a.Job.Title</a><br /><span class="small text-muted">due @a.DueDate.Local("dd MMM yyyy")</span></span>
+                        <span class="badge @UiHelpers.Badge(a.Status)">@a.Status.DisplayName()</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card mb-3 sb-simulated"><div class="card-body">
+            <div class="small text-muted">Payments (simulated ledger)</div>
+            <div class="d-flex justify-content-between"><span>Recorded as paid</span><strong>@UiHelpers.Money(Model.PaidTotal)</strong></div>
+            <div class="d-flex justify-content-between"><span>Pending / due</span><strong>@UiHelpers.Money(Model.PendingPaymentTotal)</strong></div>
+            <a asp-controller="Payments" asp-action="Index" class="small">Payment history</a>
+        </div></div>
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">Recent applications <a asp-controller="Applications" asp-action="Mine" class="small">All</a></div>
+            <ul class="list-group list-group-flush">
+                @if (Model.RecentApplications.Count == 0) { <li class="list-group-item text-muted small">No applications yet.</li> }
+                @foreach (var ap in Model.RecentApplications)
+                {
+                    <li class="list-group-item d-flex justify-content-between small">
+                        <a asp-controller="Jobs" asp-action="Details" asp-route-id="@ap.JobId">@ap.Job.Title</a>
+                        <span class="badge @UiHelpers.Badge(ap.Status)">@ap.Status.DisplayName()</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

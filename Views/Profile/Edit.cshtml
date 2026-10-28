@@ -1,0 +1,63 @@
+@model ProfileEditModel
+@{ ViewData["Title"] = "Edit profile"; }
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card"><div class="card-body p-4">
+            <h1 class="h4 mb-3">Edit profile</h1>
+            <form asp-action="Edit" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Location" class="form-label"></label>
+                        <input asp-for="Location" class="form-control" />
+                    </div>
+                </div>
+                @if (Model.IsEmployer)
+                {
+                    <div class="mb-3">
+                        <label asp-for="CompanyName" class="form-label"></label>
+                        <input asp-for="CompanyName" class="form-control" />
+                    </div>
+                }
+                <div class="mb-3">
+                    <label asp-for="Headline" class="form-label"></label>
+                    <input asp-for="Headline" class="form-control" placeholder="e.g. Full-stack ASP.NET Core developer" />
+                </div>
+                <div class="mb-3">
+                    <label asp-for="Bio" class="form-label"></label>
+                    <textarea asp-for="Bio" class="form-control" rows="4"></textarea>
+                </div>
+                @if (Model.IsHunter)
+                {
+                    <div class="mb-3">
+                        <label asp-for="Education" class="form-label"></label>
+                        <textarea asp-for="Education" class="form-control" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="Experience" class="form-label"></label>
+                        <textarea asp-for="Experience" class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-7 mb-3">
+                            <label asp-for="PortfolioUrl" class="form-label"></label>
+                            <input asp-for="PortfolioUrl" class="form-control" placeholder="https://github.com/…" />
+                            <span asp-validation-for="PortfolioUrl" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-5 mb-3">
+                            <label asp-for="Availability" class="form-label"></label>
+                            <input asp-for="Availability" class="form-control" placeholder="e.g. 20 hours/week" />
+                        </div>
+                    </div>
+                }
+                <button class="btn btn-primary">Save profile</button>
+                <a asp-action="Me" class="btn btn-link">Cancel</a>
+            </form>
+        </div></div>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
