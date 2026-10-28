@@ -18,7 +18,6 @@ Date: 28 October 2026 · Auditor: Claude (development assistant) · Scope: initi
 |---|---|
 | `E:\SkillBridge` | Empty folder at the start (later contained only an initial scaffold created by the assistant earlier the same day). No solution, migrations, tests or documentation existed. |
 | `C:\Users\Access\source\repos\JOBSPHERE` | Unmodified default ASP.NET Core MVC template (Home/Privacy only). No business code to reuse. Its `wwwroot/lib` (Bootstrap, jQuery, jQuery validation) was copied into SkillBridge. |
-| `E:\RASHED SIR DP\FindYourJob-master`, `E:\my project\FindYourJob-master` | Possibly a reference project / requirements. **Access was declined by the user**; the folders were not read. |
 | Git repository | None (Git not installed). |
 
 ## 3. Requirements sources available
